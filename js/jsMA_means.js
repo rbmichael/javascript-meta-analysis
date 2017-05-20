@@ -1,3 +1,76 @@
+// function that runs when document has loaded
+$(document).ready(function() {
+
+	// 'add a study' button behaviour
+	$('#add').click(function() {
+		// add the html
+		$('#studies').append("<div>" + 
+							"M: <input type=\"number\" value=\"\"></input>" +
+							"SD: <input type=\"number\" value=\"\"></input>" +
+							"N: <input type=\"number\" value=\"\"></input>" +
+							"<input type=\"button\" value=\"remove\" class=\"remove\"></input>" +
+							"<br />" +
+							"</div>");
+		// add the 'remove' button behaviour
+		$('.remove').click(function() { $(this).parent().detach(); });
+	});
+
+	// 'remove all studies' button behaviour
+	$('#removeAll').click(function() {
+		$('#studies *').detach();
+	});
+	
+	// run meta-analysis
+	$('#run').click(function() {
+		/*
+			step 1: check data entry, proceed if OK, else return errors
+		*/
+		
+		/*
+			step 2: gather data for analysis
+		*/
+		var k = $('#studies div').length; // number of studies
+		var df = k - 1; // degrees of freedom
+		var ci = Number($('#ci').val()); // level of confidence
+		var nullMean = Number($('#null').val()); // null hypothesis mean
+		var alpha = (100 - ci) / 100; // alpha
+		var formData = new Array(); // an array of the entered data; each item in the array becomes one study
+		var studyData = { mean:null, sd:null, n:null }; // an object for each study
+		// loop through the studies
+		$('#studies div').each(function(index) {
+			// get a study's M, SD, and N
+			$(this).children('input').each(function(index) {
+				switch(index) {
+					case 0:
+						studyData.mean = Number($(this).val());
+						break;
+					case 1:
+						studyData.sd = Number($(this).val());
+						break;
+					case 2:
+						studyData.n = Number($(this).val());
+						break;
+					default:
+						break;
+				}
+			});
+			// add the study's data to the data array
+			formData[index] = studyData;
+		});
+		// BOOKMARK: Have form data in 'formData'; next step get all individual studies' inferential stats etc
+		
+		/*
+			step 3: meta-analysis calculations
+		*/
+		
+		/*
+			step 4: display meta-analysis results
+		*/
+	});
+});
+
+/* everything below here from old version */
+
 // declare global variables
 var alpha;
 
