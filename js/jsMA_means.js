@@ -1,6 +1,6 @@
 // run when document is fully loaded
 $(document).ready(function() {
-	
+
 	// set the 'add a study' button behaviour
 	$('#add').click(function() {
 		// add the html for a new study
@@ -17,6 +17,37 @@ $(document).ready(function() {
 		$('#display *').detach(); // clear the display
 		$('#studies *').detach(); // remove all studies
 		$('#add').click(); $('#add').click(); // add the 2 minimum study rows
+	});
+	
+	// set the csv import button behaviour 
+	// NEEDS DATA CHECKING ADDED
+	$('#updateCSV').click(function() {
+		var csv = $('#csv').val(); // get the textarea input
+		var rows = csv.split('\n'); // split it into rows based on newline character
+		var data = new Array(); // create an array to hold the data arrays
+		for (var i = 0; i < rows.length; i++) { data[i] = rows[i].split(','); } // create an array of values from each row of data
+		// now populate the form
+		$('#studies *').detach(); // first remove all studies
+		// loop through data array adding study rows
+		for (var i = 0; i < data.length; i++) {
+			$('#add').click(); // add a row
+			// populate it with the data
+			$('#studies div:last input').each(function(index) {
+				switch (index) {
+					case 0: // insert mean
+						$(this).val(data[i][0]);
+						break;
+					case 1: // insert standard deviation
+						$(this).val(data[i][1]);
+						break;
+					case 2: // insert n
+						$(this).val(data[i][2]);
+						break;
+					default:
+						break;
+				}
+			});
+		}
 	});
 	
 	// set the 'run' button behaviour

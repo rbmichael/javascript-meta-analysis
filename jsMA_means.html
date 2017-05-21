@@ -18,7 +18,10 @@
 		<br />
 		Then, enter a null-hypothesis mean (default 0): <input type="number" value="0" id="null"></input>
 		<br />
-		Then, for each study, enter its MEAN, STANDARD DEVIATION and N.<br />
+		Then, for each study, enter its MEAN, STANDARD DEVIATION and N using the form below.<br />
+		Alternatively, paste comma separated values into the text box below (M,SD,N), then click the Update form button.<br />
+		<textarea id="csv"></textarea><br />
+		<input type="button" value="Update form" id="updateCSV"></input><br /><br />
 		<input type="button" value="Add a study" id="add"></input>
 		<input type="button" value="Remove all studies" id="removeAll"></input>
 		<input type="button" value="Run meta-analysis" id="run" disabled></input>
