@@ -23,12 +23,14 @@ $(document).ready(function() {
 	
 	// set the 'remove all studies' button behaviour
 	$('#removeAll').click(function() {
-		$('#studies *').detach();
+		$('#studies *').detach(); // remove all studies
+		$('#display *').detach(); // clear the display
 	});
 	
 	// set the 'run' button behaviour
 	$('#run').click(function() {
 		/*
+			*** TODO ***
 			step 1: check data entry, proceed if OK, else return errors
 			- minimum 2 studies
 			- each study must have: sd > 0 && n > 1
@@ -38,8 +40,7 @@ $(document).ready(function() {
 		var maData = getData(); // get form data and inferential stats for individual studies
 		maData.fixedWeights = getFixedWeightSums(maData.dataSet); // get fixed weights
 		maData.heterogeneity = getHeterogeneity(maData.fixedWeights, maData.df, maData.alpha); // get heterogeneity measures
-		// for each study in the dataset, add in its random model variance and weight
-		for (var i = 0; i < maData.dataSet.length; i++) {
+		for (var i = 0; i < maData.dataSet.length; i++) { // for each study in the dataset, add in its random model variance and weight
 			maData.dataSet[i].randomVariance = maData.dataSet[i].variance + maData.heterogeneity.tSq; // random model variance
 			maData.dataSet[i].randomWeight = 1 / maData.dataSet[i].randomVariance; // random model weight
 		}
@@ -50,7 +51,43 @@ $(document).ready(function() {
 		maData.random = metaAnalyse(maData.randomWeights, maData.alpha, maData.nullMean); // run the random model meta-analysis
 		
 		/* step 4: display meta-analysis results */
-		// BOOKMARK: Have all data in maData variable, just need to display it
+		$('#display *').detach(); // first clear the display
+		for (var i = 0; i < maData.dataSet.length; i++) { // then loop through each study and display its data
+			$('#display').append("<div>"
+				+ "Study #" + (i+1)
+				+ " Mean = " + maData.dataSet[i].mean.toFixed(2)
+				+ " SD = " + maData.dataSet[i].sd.toFixed(2)
+				+ " N = " + maData.dataSet[i].n.toFixed(0)
+				+ " SE = " + maData.dataSet[i].se.toFixed(2)
+				+ " Var = " + maData.dataSet[i].variance.toFixed(2)
+				+ " MoE = " + maData.dataSet[i].moe.toFixed(2)
+				+ " Weight = " + maData.dataSet[i].weight.toFixed(2)
+				+ " t = " + maData.dataSet[i].t.toFixed(2)
+				+ " p = " + maData.dataSet[i].p.toFixed(3)
+				+ "</div><br />"
+			);
+		}
+		displayModel(maData.fixed, "FIXED"); // then display the fixed model
+		displayModel(maData.random, "RANDOM"); // then display the random model
+		// then display the heterogeneity information
+		$('#display').append("<div>"
+			+ "HETEROGENEITY INFORMATION<br />"
+			+ " Q = " + maData.heterogeneity.q.toFixed(2)
+			+ " C = " + maData.heterogeneity.c.toFixed(2)
+			+ " Tau<sup>2</sup> = " + maData.heterogeneity.tSq.toFixed(2)
+			+ " Tau = " + maData.heterogeneity.t.toFixed(2)
+			+ " I<sup>2</sup> = " + (maData.heterogeneity.iSq * 100).toFixed(2) + "%"
+			+ " B1 = " + maData.heterogeneity.b1.toFixed(2)
+			+ " B2 = " + maData.heterogeneity.b2.toFixed(2)
+			+ " L = " + maData.heterogeneity.l.toFixed(2)
+			+ " U = " + maData.heterogeneity.u.toFixed(2)
+			+ " LL Tau<sup>2</sup> = " + maData.heterogeneity.lltSq.toFixed(2)
+			+ " UL Tau<sup>2</sup> = " + maData.heterogeneity.ultSq.toFixed(2)
+			+ " LL Tau = " + maData.heterogeneity.llt.toFixed(2)
+			+ " UL Tau = " + maData.heterogeneity.ult.toFixed(2)
+			+ " p = " + maData.heterogeneity.p.toFixed(3)
+			+ "</div><br />"
+		);
 	});
 });
 
@@ -163,7 +200,21 @@ function metaAnalyse(weights, alpha, nullMean) {
 	return maData; // pass the data back
 }
 
-
+// display a meta-analysis model
+function displayModel(data, model) {
+	$('#display').append("<div>"
+		+ model + " EFFECTS MODEL<br />"
+		+ "Mean = " + data.mean.toFixed(2)
+		+ " SD = " + data.sd.toFixed(2)
+		+ " Var = " + data.variance.toFixed(2)
+		+ " MoE = " + data.moe.toFixed(2)
+		+ " LL = " + data.ll.toFixed(2)
+		+ " UL = " + data.ul.toFixed(2)
+		+ " z = " + data.z.toFixed(2)
+		+ " p = " + data.p.toFixed(3)
+		+ "</div><br />"
+	);
+}
 
 
 
@@ -174,32 +225,6 @@ function metaAnalyse(weights, alpha, nullMean) {
 /* everything below here from old version */
 
 /*
-    // display MA
-    var c = document.getElementById("container");
-    var z, p;
-    c.innerHTML = "Point and Interval Estimates<br />";
-    for (i=0;i<k;i++) {
-    	c.innerHTML += (i+1) + ". Mean = " + dataset[i].mean.toFixed(2) + ", CI [" + (dataset[i].mean - dataset[i].moe).toFixed(2) + ", " + (dataset[i].mean + dataset[i].moe).toFixed(2) +"], ";
-    	c.innerHTML += "t = " + dataset[i].t.toFixed(2) + ", p = " + dataset[i].p.toFixed(2) + "<br />"; 
-    }
-    c.innerHTML += "<br />FIXED EFFECTS MODEL<br />";
-    c.innerHTML += "Mean = " + MAFixed.MetaAnalysedMean.toFixed(2) + ", CI [" + MAFixed.lowerCI_MetaAnalysedMean.toFixed(2) + ", " + MAFixed.upperCI_MetaAnalysedMean.toFixed(2) + "]";
-    z = (MAFixed.MetaAnalysedMean - null_mean) / MAFixed.sdMetaAnalysedMean;
-    p = 2 * (1 - (jStat.normal.cdf(Math.abs(z), 0, 1)));
-    c.innerHTML += ", z = " + z.toFixed(2);
-    c.innerHTML += ", p = " + p.toFixed(2) + "<br />";
-    c.innerHTML += "<br />RANDOM EFFECTS MODEL<br />";
-    c.innerHTML += "Mean = " + MARandom.MetaAnalysedMean.toFixed(2) + ", CI [" + MARandom.lowerCI_MetaAnalysedMean.toFixed(2) + ", " + MARandom.upperCI_MetaAnalysedMean.toFixed(2) + "]";
-    z = (MARandom.MetaAnalysedMean - null_mean) / MARandom.sdMetaAnalysedMean;
-    p = 2 * (1 - (jStat.normal.cdf(Math.abs(z), 0, 1)));
-    c.innerHTML += ", z = " + z.toFixed(2);
-    c.innerHTML += ", p = " + p.toFixed(2) + "<br />";
-    c.innerHTML += "<br />HETEROGENEITY<br />";
-    c.innerHTML += "Tau<sup>2</sup> = " + heterogeneity.tSq.toFixed(2);
-    c.innerHTML += "<br />Tau = " + heterogeneity.t.toFixed(2) + ", CI [" + heterogeneity.llt.toFixed(2) + ", " + heterogeneity.ult.toFixed(2) + "]";
-    c.innerHTML += "<br />Q = " + heterogeneity.q.toFixed(2) + "<br />df = " + df + "<br />p = " + heterogeneity.p.toFixed(2);
-    c.innerHTML += "<br />I<sup>2</sup> = " + (heterogeneity.iSq * 100).toFixed(2) + "%";
-    
     // display ascii plot
     
     var low = dataset[0].mean - dataset[0].moe;
