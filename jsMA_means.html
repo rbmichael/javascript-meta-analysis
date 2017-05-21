@@ -1,96 +1,14 @@
-<!DOCTYPE HTML>
+<!doctype html>
 <html>
 	<head>
-		<title>Simple Meta-Analysis — Means</title>
+		<title>Meta-Analysis — Means</title>
 		<link rel="stylesheet" type="text/css" href="./css/style.css">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.6.0/jstat.min.js" integrity="sha256-YDpvU2WSVH8p/EEd08TXCj6SQryOim28OkUZ4yVUmu4=" crossorigin="anonymous"></script>
 		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
   		<script type="text/javascript" src="./js/jsMA_means.js"></script>
-		<script type="text/javascript">
-			// add a new study; a table row for data entry
-			function addStudy() {
-				var tbl = document.getElementById("MAdata");
-				var k = tbl.rows.length;
-				var tr = tbl.insertRow(k);
-				var td;
-				td = tr.insertCell(0); td.innerHTML = k + ".";
-				td = tr.insertCell(1); td.innerHTML = "<input type=\"number\" value=\"\" id=\"i_m" + k + "\"></input>";
-				td = tr.insertCell(2); td.innerHTML = "<input type=\"number\" value=\"\" id=\"i_sd" + k + "\"></input>";
-				td = tr.insertCell(3); td.innerHTML = "<input type=\"number\" value=\"\" id=\"i_n" + k + "\"></input>";
-				td = tr.insertCell(4); td.innerHTML = "<input type=\"button\" value=\"remove\" onclick=\"deleteStudy(" + k + ");\"></input>";
-				document.getElementById("k").value++;
-			}
-
-			// delete a study; remove a table row of data entry
-			function deleteStudy(i) {
-				i = Number(i);
-				var tbl = document.getElementById("MAdata");
-				if (tbl.rows.length > 3) {
-					// transfer m, sd, and n from each study after this one up one row, then remove the last row of the table and update the number of studies/rows
-					for (i; i<(tbl.rows.length-1); i++) {
-						document.getElementById("i_m"+i).value = document.getElementById("i_m"+(i+1)).value;
-						document.getElementById("i_sd"+i).value = document.getElementById("i_sd"+(i+1)).value;
-						document.getElementById("i_n"+i).value = document.getElementById("i_n"+(i+1)).value;
-					}
-					tbl.deleteRow(tbl.rows.length-1);
-					document.getElementById("k").value--;
-				} else {
-					alert("Minimum of 2 studies required.");
-				}
-			}
-		</script>
 	</head>
 	<body>
-		<form id="MA">
-		<input type="hidden" value="2" id="k"></input>
-		SIMPLE META-ANALYSIS<br /><br />
-		First, select a level of confidence:
-		<select id="ci_level">
-			<option value="90">90%</option>
-			<option value="95" selected>95%</option>
-			<option value="99">99%</option>
-		</select>
-		<br /><br />
-		Then, enter a null-hypothesis mean (default 0): <input type="number" value="0" id="null_mean"></input>
-		<br /><br />
-		Then, for each study, enter its MEAN, STANDARD DEVIATION and N.<br /><br />
-			<table id="MAdata">
-				<tr>
-					<td>&nbsp;</td>
-					<td>MEAN</td>
-					<td>SD</td>
-					<td>N</td>
-					<td>&nbsp;</td>
-				</tr>
-				<tr>
-					<td>1.</td>
-					<td><input type="number" value="" id="i_m1"></input></td>
-					<td><input type="number" value="" id="i_sd1"></input></td>
-					<td><input type="number" value="" id="i_n1"></input></td>
-					<td><input type="button" value="remove" onclick="deleteStudy(1);"></input></td>
-				</tr>
-				<tr>
-					<td>2.</td>
-					<td><input type="number" value="" id="i_m2"></input></td>
-					<td><input type="number" value="" id="i_sd2"></input></td>
-					<td><input type="number" value="" id="i_n2"></input></td>
-					<td><input type="button" value="remove" onclick="deleteStudy(2);"></input></td>
-				</tr>
-			</table>
-			<input type="button" value="Add a new study" onclick="addStudy();"></input>&nbsp;&nbsp;<input type="reset" value="Clear form data"></input>
-			<br />
-		</form>
-		<br />
-		
-		<!-- Confidence interval: <input type="number" value="95" id="ci_level"></input><br /> //-->
-		<a href="javascript:runMA();">RUN META-ANALYSIS</a><br />
-
-		<hr />
-		<!-- container to display MA data -->
-		<div id="container"></div>
-
-		<hr /><div id="temp"></div><br /><br />
-		
+		Meta-Analysis — Means<br />
 		First, select a level of confidence:
 		<select id="ci">
 			<option value="90">90%</option>
@@ -103,12 +21,12 @@
 		Then, for each study, enter its MEAN, STANDARD DEVIATION and N.<br />
 		<input type="button" value="Add a study" id="add"></input>
 		<input type="button" value="Remove all studies" id="removeAll"></input>
-		<input type="button" value="Run meta-analysis" id="run"></input>
+		<input type="button" value="Run meta-analysis" id="run" disabled></input>
 		<br />
 		<div id="studies">
+			<div>M: <input type="number" value=""></input>SD: <input type="number" value=""></input>N: <input type="number" value=""></input><input type="button" value="remove" class="remove"></input><br /></div>
+			<div>M: <input type="number" value=""></input>SD: <input type="number" value=""></input>N: <input type="number" value=""></input><input type="button" value="remove" class="remove"></input><br /></div>
 		</div>
 		<br />
-		<div id="ma">
-		</div>
 	</body>
 </html>

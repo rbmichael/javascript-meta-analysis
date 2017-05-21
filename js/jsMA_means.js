@@ -1,9 +1,12 @@
 // function that runs when document has loaded
 $(document).ready(function() {
 
-	// 'add a study' button behaviour
+	// enable the 'run' button
+	$('#run').prop('disabled', false);
+	
+	// set the 'add a study' button behaviour
 	$('#add').click(function() {
-		// add the html
+		// add the html for a new study
 		$('#studies').append("<div>" + 
 							"M: <input type=\"number\" value=\"\"></input>" +
 							"SD: <input type=\"number\" value=\"\"></input>" +
@@ -11,70 +14,89 @@ $(document).ready(function() {
 							"<input type=\"button\" value=\"remove\" class=\"remove\"></input>" +
 							"<br />" +
 							"</div>");
-		// add the 'remove' button behaviour
+		// update all 'remove' buttons' behaviour
 		$('.remove').click(function() { $(this).parent().detach(); });
 	});
 
-	// 'remove all studies' button behaviour
+	// set the initial 'remove' buttons' behaviour
+	$('.remove').click(function() { $(this).parent().detach(); });
+	
+	// set the 'remove all studies' button behaviour
 	$('#removeAll').click(function() {
 		$('#studies *').detach();
 	});
 	
-	// run meta-analysis
+	// set the 'run' button behaviour
 	$('#run').click(function() {
 		/*
 			step 1: check data entry, proceed if OK, else return errors
+			- minimum 2 studies
+			- each study must have: sd > 0 && n > 1
 		*/
 		
-		/*
-			step 2: gather data for analysis
-		*/
-		var k = $('#studies div').length; // number of studies
-		var df = k - 1; // degrees of freedom
-		var ci = Number($('#ci').val()); // level of confidence
-		var nullMean = Number($('#null').val()); // null hypothesis mean
-		var alpha = (100 - ci) / 100; // alpha
-		var formData = new Array(); // an array of the entered data; each item in the array becomes one study
-		var studyData = { mean:null, sd:null, n:null }; // an object for each study
-		// loop through the studies
-		$('#studies div').each(function(index) {
-			// get a study's M, SD, and N
-			$(this).children('input').each(function(index) {
-				switch(index) {
-					case 0:
-						studyData.mean = Number($(this).val());
-						break;
-					case 1:
-						studyData.sd = Number($(this).val());
-						break;
-					case 2:
-						studyData.n = Number($(this).val());
-						break;
-					default:
-						break;
-				}
-			});
-			// add the study's data to the data array
-			formData[index] = studyData;
-		});
-		// BOOKMARK: Have form data in 'formData'; next step get all individual studies' inferential stats etc
+		/* step 2: gather data for analysis */
+		var maData = getData(); // get form data and inferential stats for individual studies
+		maData.fixedWeights = getFixedWeightSums(maData.dataSet); // get fixed weights
+		maData.heterogeneity = getHeterogeneity(maData.fixedWeights, maData.df, maData.alpha); // get heterogeneity measures
+		// for each study in the dataset, add in its random model variance and weight
+		for (var i = 0; i < maData.dataSet.length; i++) {
+			maData.dataSet[i].randomVariance = maData.dataSet[i].variance + maData.heterogeneity.tSq; // random model variance
+			maData.dataSet[i].randomWeight = 1 / maData.dataSet[i].randomVariance; // random model weight
+		}
+		maData.randomWeights = getRandomWeightSums(maData.dataSet); // get random weights
 		
-		/*
-			step 3: meta-analysis calculations
-		*/
+		/* step 3: meta-analysis calculations */
+		maData.fixed = metaAnalyse(maData.fixedWeights, maData.alpha, maData.nullMean); // run the fixed model meta-analysis
+		maData.random = metaAnalyse(maData.randomWeights, maData.alpha, maData.nullMean); // run the random model meta-analysis
 		
-		/*
-			step 4: display meta-analysis results
-		*/
+		/* step 4: display meta-analysis results */
+		// BOOKMARK: Have all data in maData variable, just need to display it
 	});
 });
 
-/* everything below here from old version */
+// gather form data, calculate inferential stats for individual studies, and return these data in an object
+function getData() {
+	var maData = {}; // object to hold data
+	maData.k = $('#studies div').length; // number of studies
+	maData.df = maData.k - 1; // degrees of freedom
+	maData.ci = Number($('#ci').val()); // level of confidence
+	maData.nullMean = Number($('#null').val()); // null hypothesis mean
+	maData.alpha = (100 - maData.ci) / 100; // alpha
+	maData.dataSet = new Array(); // an array to hold the dataset; each item in the array is an object with one study's data
+	var t_crit; // holds critical t value for each study (calculated via jStat)
+	var studyData = { mean:null, sd:null, n:null, se:null, variance:null, moe:null, weight:null, t:null, p:null }; // an object for study data
+	// loop through the studies
+	$('#studies div').each(function(index) {
+		// get a study's M, SD, and N
+		$(this).children('input').each(function(index) {
+			switch(index) {
+				case 0:
+					studyData.mean = Number($(this).val());
+					break;
+				case 1:
+					studyData.sd = Number($(this).val());
+					break;
+				case 2:
+					studyData.n = Number($(this).val());
+					break;
+				default:
+					break;
+			}
+		});
+		studyData.se = studyData.sd / Math.sqrt(studyData.n); // calculate standard error
+		studyData.variance = studyData.se * studyData.se; // calculate variance
+		t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.n-1); // calculate critical t value
+		studyData.moe = t_crit * studyData.se; // calculate margin of error
+		studyData.weight = 1 / studyData.variance; // calculate (fixed) study weight
+		studyData.t = (studyData.mean - maData.nullMean) / studyData.se; // calculate t value
+		studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.n-1))); // calculate p value
+		// add the study's data to the data array
+		maData.dataSet[index] = { mean:studyData.mean, sd:studyData.sd, n:studyData.n, se:studyData.se, variance:studyData.variance, moe:studyData.moe, weight:studyData.weight, t:studyData.t, p:studyData.p, randomVariance:null, randomWeight:null };
+	});
+	return maData;
+}
 
-// declare global variables
-var alpha;
-
-// function to calculate summed weights for fixed effects model
+// calculate summed weights for fixed effects model, return as object of 4 values
 function getFixedWeightSums(dataset) {
     var i, fixedWeights = { sumWeights:0, sumWeightsTimesMeans:0, sumWeightsTimesSquaredMeans:0, sumSquaredWeights:0 }; // create an object to hold the weight values
     // for each study, add the weight measures, resulting in summed weights
@@ -87,8 +109,8 @@ function getFixedWeightSums(dataset) {
     return fixedWeights;
 }
 
-// function to get heterogeneity information
-function getHeterogeneity(weights, df) {
+// calculate heterogeneity measures, return as object of 15 values
+function getHeterogeneity(weights, df, alpha) {
     var q, c, tSq, t, iSq, b, b1, b2, l, u, lltSq, ultSq, llt, ult, p;
     q = weights.sumWeightsTimesSquaredMeans - ( ( weights.sumWeightsTimesMeans * weights.sumWeightsTimesMeans ) / weights.sumWeights ); // Q
     c = weights.sumWeights - ( weights.sumSquaredWeights / weights.sumWeights ); // C
@@ -113,75 +135,45 @@ function getHeterogeneity(weights, df) {
     return heterogeneity; // send the data back
 }
 
-// function to add random model information to the dataset
-function addRandomModelInfo(dataset, heterogeneity) {
-    // for every study
-    var i;
-    for (i=0;i<dataset.length;i++) {
-        dataset[i].r_variance = dataset[i].variance + heterogeneity.tSq; // get the random model variance
-        dataset[i].r_weight = 1 / dataset[i].r_variance; // get the random model weight
-    }
-    return dataset; // pass the updated data back
-}
-
-// function to calculate summed weights for random effects model
+// calculate summed weights for random effects model, return as object of 2 values
 function getRandomWeightSums(dataset) {
     var i;
     // create an object to hold the values of the weights (initially zero)
     var randomWeights = { sumWeightsTimesMeans:0, sumWeights:0 };
     // for each row of data (each study) add the appropriate weight measure to the object values, producing a sum
     for (i=0;i<dataset.length;i++) {
-        randomWeights.sumWeightsTimesMeans += dataset[i].r_weight * dataset[i].mean;
-        randomWeights.sumWeights += dataset[i].r_weight;
+        randomWeights.sumWeightsTimesMeans += dataset[i].randomWeight * dataset[i].mean;
+        randomWeights.sumWeights += dataset[i].randomWeight;
     }
     // pass back the data
     return randomWeights;
-}            
-
-// function to gather the main meta-analysis information
-function doMetaAnalysis(weights) {
-    var MAMean = weights.sumWeightsTimesMeans / weights.sumWeights; // meta-analysed mean
-    var varMAMean = 1 / weights.sumWeights; // variance of meta-analysed mean
-    var sdMAMean = Math.sqrt(varMAMean); // standard deviation of meta-analysed mean
-    var MOE_MAMean = (jStat.normal.inv((1-(alpha/2)), 0, 1) * sdMAMean); // margin of error of meta-analysed mean
-    var lowerCI = MAMean - MOE_MAMean; // lower 95% CI of meta-analysed mean
-    var upperCI = MAMean + MOE_MAMean; // upper 95% CI of meta-analysed mean
-    // put the values into an object for the function to return
-    var data = { MetaAnalysedMean:MAMean, VarianceOfMetaAnalysedMean:varMAMean, sdMetaAnalysedMean:sdMAMean, MOE_MetaAnalysedMean:MOE_MAMean,
-                 lowerCI_MetaAnalysedMean:lowerCI, upperCI_MetaAnalysedMean:upperCI };
-    return data; // pass the data back
 }
 
-// function that runs when user hits the "RUN" button -- needs some kind of data checking implemented ...
-function runMA() {
-    var k = Number(document.getElementById("k").value);
-    var df = k-1;
-    var ci_level = Number(document.getElementById("ci_level").value);
-    var null_mean = Number(document.getElementById("null_mean").value);
-    alpha = (100 - ci_level) / 100;
-    var dataset = new Array();
-    var data = { mean:null, sd:null, n:null, se:null, variance:null, moe:null, weight:null, t:null, p:null };
-    var i, t, t_crit;
-    for (i=0;i<k;i++) {
-        data.mean = Number(document.getElementById("i_m"+(i+1)).value);
-        data.sd = Number(document.getElementById("i_sd"+(i+1)).value);
-        data.n = Number(document.getElementById("i_n"+(i+1)).value);
-        data.se = data.sd / Math.sqrt(data.n);
-        data.variance = data.se * data.se;
-        t_crit = jStat.studentt.inv((1-(alpha/2)), data.n-1);
-        data.moe = t_crit * data.se;
-        data.weight = 1 / data.variance;
-        data.t = (data.mean - null_mean) / data.se;
-        data.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(data.t), data.n-1)));
-        dataset[i] = { mean:data.mean, sd:data.sd, n:data.n, se:data.se, variance:data.variance, moe:data.moe, weight:data.weight, r_variance:null, r_weight:null, t:data.t, p:data.p };
-    }
-    var fixedWeightSums = getFixedWeightSums(dataset);
-    var heterogeneity = getHeterogeneity(fixedWeightSums, df);
-    dataset = addRandomModelInfo(dataset, heterogeneity);
-    var randomWeightSums = getRandomWeightSums(dataset);
-    var MAFixed = doMetaAnalysis(fixedWeightSums); // call a function to run the fixed effects meta-analysis
-    var MARandom = doMetaAnalysis(randomWeightSums); // call a function to run the random effects meta-analysis
-    
+// calculate meta-analysis, return as object of 8 values
+function metaAnalyse(weights, alpha, nullMean) {
+	var maData = {};
+	maData.mean = weights.sumWeightsTimesMeans / weights.sumWeights; // meta-analysed mean
+	maData.variance = 1 / weights.sumWeights; // variance of meta-analysed mean
+	maData.sd = Math.sqrt(maData.variance); // standard deviation of meta-analysed mean
+	maData.moe = jStat.normal.inv((1-(alpha/2)), 0, 1) * maData.sd; // margin of error of meta-analysed mean
+	maData.ll = maData.mean - maData.moe; // lower limit of 95% CI
+	maData.ul = maData.mean + maData.moe; // upper limit of 95% CI
+	maData.z = (maData.mean - nullMean) / maData.sd;
+	maData.p = 2 * (1 - (jStat.normal.cdf(Math.abs(maData.z), 0, 1)));
+	return maData; // pass the data back
+}
+
+
+
+
+
+
+
+
+
+/* everything below here from old version */
+
+/*
     // display MA
     var c = document.getElementById("container");
     var z, p;
@@ -281,3 +273,4 @@ function runMA() {
     document.getElementById("random"+(rescaleData[0].mean+10)).innerHTML = "|";
     document.getElementById("temp").innerHTML += "<-- RANDOM EFFECTS MODEL<br />";
 }
+*/
