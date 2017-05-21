@@ -1,30 +1,22 @@
-// function that runs when document has loaded
+// run when document is fully loaded
 $(document).ready(function() {
-
-	// enable the 'run' button
-	$('#run').prop('disabled', false);
 	
 	// set the 'add a study' button behaviour
 	$('#add').click(function() {
 		// add the html for a new study
-		$('#studies').append("<div>" + 
-							"M: <input type=\"number\" value=\"\"></input>" +
-							"SD: <input type=\"number\" value=\"\"></input>" +
-							"N: <input type=\"number\" value=\"\"></input>" +
-							"<input type=\"button\" value=\"remove\" class=\"remove\"></input>" +
-							"<br />" +
-							"</div>");
-		// update all 'remove' buttons' behaviour
-		$('.remove').click(function() { $(this).parent().detach(); });
+		$('#studies').append("<div>" + "M: <input type=\"number\" value=\"\"></input>" + "SD: <input type=\"number\" value=\"\"></input>" + "N: <input type=\"number\" value=\"\"></input>" + "<input type=\"button\" value=\"remove\" class=\"remove\"></input>" + "<br />" + "</div>");
+		// add the remove button behaviour
+		$('#studies div:last .remove').click(function() {
+			if ($('#studies div').length > 2) { $(this).parent().detach(); } // if 3+ studies, remove the row
+			else { alert("At least 2 studies are required."); } // otherwise display a message
+		});
 	});
 
-	// set the initial 'remove' buttons' behaviour
-	$('.remove').click(function() { $(this).parent().detach(); });
-	
 	// set the 'remove all studies' button behaviour
 	$('#removeAll').click(function() {
-		$('#studies *').detach(); // remove all studies
 		$('#display *').detach(); // clear the display
+		$('#studies *').detach(); // remove all studies
+		$('#add').click(); $('#add').click(); // add the 2 minimum study rows
 	});
 	
 	// set the 'run' button behaviour
@@ -89,6 +81,13 @@ $(document).ready(function() {
 			+ "</div><br />"
 		);
 	});
+
+	// add the initial 2 study rows
+	$('#add').click(); $('#add').click();
+
+	// enable the 'run' button
+	$('#run').prop('disabled', false);
+
 });
 
 // gather form data, calculate inferential stats for individual studies, and return these data in an object
