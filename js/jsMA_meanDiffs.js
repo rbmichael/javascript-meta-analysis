@@ -1,5 +1,5 @@
 // run when document is fully loaded
-$(document).ready(function() {
+$(function() {
 
 	// set the 'add a study' button behaviour
 	$('#add').click(function() {
@@ -83,18 +83,17 @@ $(document).ready(function() {
 		/* step 4: display meta-analysis results */
 		$('#display *').detach(); // first clear the display
 		for (var i = 0; i < maData.dataSet.length; i++) { // then loop through each study and display its data
-			$('#display').append("<div>Study #" + (i+1) + " M<sub>Diff</sub> = " + maData.dataSet[i].mDiff.toFixed(2) + " Pooled SD = " + maData.dataSet[i].pooledSD.toFixed(2) + " VarDiff = " + maData.dataSet[i].varDiff.toFixed(2) + " MoE = " + maData.dataSet[i].moeDiff.toFixed(2) + " Weight = " + maData.dataSet[i].weight.toFixed(2) + " t = " + maData.dataSet[i].t.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div><br />");
+			$('#display').append("<div>Study #" + (i+1) + " M<sub>Diff</sub> = " + maData.dataSet[i].mDiff.toFixed(2) + " Pooled SD = " + maData.dataSet[i].pooledSD.toFixed(2) + " VarDiff = " + maData.dataSet[i].varDiff.toFixed(2) + " MoE = " + maData.dataSet[i].moeDiff.toFixed(2) + " Weight = " + maData.dataSet[i].weight.toFixed(2) + " t = " + maData.dataSet[i].t.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
 		}
 		displayModel(maData.fixed, "FIXED"); // then display the fixed model
 		displayModel(maData.random, "RANDOM"); // then display the random model
 		// then display the heterogeneity information
-		$('#display').append("<div>" + "HETEROGENEITY INFORMATION<br />" + " Q = " + maData.heterogeneity.q.toFixed(2) + " C = " + maData.heterogeneity.c.toFixed(2) + " Tau<sup>2</sup> = " + maData.heterogeneity.tSq.toFixed(2) + " Tau = " + maData.heterogeneity.t.toFixed(2) + " I<sup>2</sup> = " + (maData.heterogeneity.iSq * 100).toFixed(2) + "%" + " B1 = " + maData.heterogeneity.b1.toFixed(2) + " B2 = " + maData.heterogeneity.b2.toFixed(2) + " L = " + maData.heterogeneity.l.toFixed(2) + " U = " + maData.heterogeneity.u.toFixed(2) + " LL Tau<sup>2</sup> = " + maData.heterogeneity.lltSq.toFixed(2) + " UL Tau<sup>2</sup> = " + maData.heterogeneity.ultSq.toFixed(2) + " LL Tau = " + maData.heterogeneity.llt.toFixed(2) + " UL Tau = " + maData.heterogeneity.ult.toFixed(2) + " p = " + maData.heterogeneity.p.toFixed(3) + "</div><br />");
+		$('#display').append("<div>" + "HETEROGENEITY INFORMATION<br />" + " Q = " + maData.heterogeneity.q.toFixed(2) + " C = " + maData.heterogeneity.c.toFixed(2) + " Tau<sup>2</sup> = " + maData.heterogeneity.tSq.toFixed(2) + " Tau = " + maData.heterogeneity.t.toFixed(2) + " I<sup>2</sup> = " + (maData.heterogeneity.iSq * 100).toFixed(2) + "%" + " B1 = " + maData.heterogeneity.b1.toFixed(2) + " B2 = " + maData.heterogeneity.b2.toFixed(2) + " L = " + maData.heterogeneity.l.toFixed(2) + " U = " + maData.heterogeneity.u.toFixed(2) + " LL Tau<sup>2</sup> = " + maData.heterogeneity.lltSq.toFixed(2) + " UL Tau<sup>2</sup> = " + maData.heterogeneity.ultSq.toFixed(2) + " LL Tau = " + maData.heterogeneity.llt.toFixed(2) + " UL Tau = " + maData.heterogeneity.ult.toFixed(2) + " p = " + maData.heterogeneity.p.toFixed(3) + "</div>");
 		
 		/* step 5: output data to csv in a <textarea> */
-		/* BOOKMARK -- needs updating */
-		var csv = "INDIVIDUAL STUDIES\nStudy ID,Mean,Standard Deviation,N,Standard Error,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,Study weight,t value,p value\n";
+		var csv = "INDIVIDUAL STUDIES\nStudy ID,Mean 1,Standard Deviation 1,N 1,Mean 2,Standard Deviation 2,N 2,Mean Difference,Pooled Standard Deviation,Variance of Difference,Margin of Error of Difference,Study Weight (fixed),t value,p value\n";
 		for (var i = 0; i < maData.dataSet.length; i++) {
-			csv += String(i+1) + "," + maData.dataSet[i].mean + "," + maData.dataSet[i].sd + "," + maData.dataSet[i].n + "," + maData.dataSet[i].se + "," + maData.dataSet[i].variance + "," + maData.dataSet[i].moe + "," + (maData.dataSet[i].mean - maData.dataSet[i].moe) + "," + (maData.dataSet[i].mean + maData.dataSet[i].moe) + "," + maData.dataSet[i].weight + "," + maData.dataSet[i].t + "," + maData.dataSet[i].p + "\n";
+			csv += String(i+1) + "," + maData.dataSet[i].m1 + "," + maData.dataSet[i].sd1 + "," + maData.dataSet[i].n1 + "," + maData.dataSet[i].m2 + "," + maData.dataSet[i].sd2 + "," + maData.dataSet[i].n2 + "," + maData.dataSet[i].mDiff + "," + maData.dataSet[i].pooledSD + "," + maData.dataSet[i].varDiff + "," + maData.dataSet[i].moeDiff + "," + maData.dataSet[i].weight + "," + maData.dataSet[i].t + "," + maData.dataSet[i].p + "\n";
 		}
 		csv += "\nFIXED EFFECTS MODEL\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixed.mean + "," + maData.fixed.sd + "," + maData.fixed.variance + "," + maData.fixed.moe + "," + maData.fixed.ll + "," + maData.fixed.ul + "," + maData.fixed.z + "," + maData.fixed.p + "\n";
 		csv += "\nRANDOM EFFECTS MODEL\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.random.mean + "," + maData.random.sd + "," + maData.random.variance + "," + maData.random.moe + "," + maData.random.ll + "," + maData.random.ul + "," + maData.random.z + "," + maData.random.p + "\n";
@@ -278,90 +277,6 @@ function displayModel(data, model) {
 		+ " UL = " + data.ul.toFixed(2)
 		+ " z = " + data.z.toFixed(2)
 		+ " p = " + data.p.toFixed(3)
-		+ "</div><br />"
+		+ "</div>"
 	);
 }
-
-
-
-
-
-
-
-/* everything below here from old version */
-
-/*
-    // display ascii plot
-    
-    var low = dataset[0].mean - dataset[0].moe;
-    var high = dataset[0].mean + dataset[0].moe;
-    var range;
-    var ll;
-    var ul;
-    var i,j;
-    var rescale = { mean:null, ll:null, ul:null };
-    var rescaleData = new Array();
-    for (i=1; i<k; i++) {
-        ll = dataset[i].mean - dataset[i].moe;
-        ul = dataset[i].mean + dataset[i].moe;
-        if (ll < low) { low = ll; }
-        if (ul > high) { high = ul; }
-    }
-    range = high - low;
-    for (i=0; i<k; i++) {
-    	rescale.mean = Math.round((100 * (dataset[i].mean - low)) / range);
-    	rescale.ll = Math.round((100 * ((dataset[i].mean-dataset[i].moe) - low)) / range);
-    	rescale.ul = Math.round((100 * ((dataset[i].mean+dataset[i].moe) - low)) / range);
-    	rescaleData[i] = { mean:rescale.mean, ll:rescale.ll, ul:rescale.ul };
-    }
-    document.getElementById("temp").innerHTML = "ASCII FOREST PLOT:<br /><br />";
-    for (i=0; i<k; i++) {
-    	for (j=0; j<120; j++) {
-    		if ((j === (rescaleData[i].ll+10)) || (j === (rescaleData[i].ul+10)) || (j === (rescaleData[i].mean+10))) {
-    			document.getElementById("temp").innerHTML += "<div id=\"" + i + j + "\">.</div>";
-    		} else {
-    			document.getElementById("temp").innerHTML += ".";
-    		}
-    		//document.getElementById("temp").innerHTML += "<div id=\"" + i + j + "\" style=\"font-family:courier; font-size:8pt;\">.</div>";
-    	}
-    	document.getElementById("temp").innerHTML += "<br />";
-    }
-    for (i=0; i<k; i++) {
-    	document.getElementById(i+""+(rescaleData[i].ll+10)).innerHTML = "[";
-    	document.getElementById(i+""+(rescaleData[i].ul+10)).innerHTML = "]";
-    	document.getElementById(i+""+(rescaleData[i].mean+10)).innerHTML = "|";
-    }
-    // plot fixed effects model
-    rescale.mean = Math.round((100 * (MAFixed.MetaAnalysedMean - low)) / range);
-    rescale.ll = Math.round((100 * ((MAFixed.MetaAnalysedMean-MAFixed.MOE_MetaAnalysedMean) - low)) / range);
-    rescale.ul = Math.round((100 * ((MAFixed.MetaAnalysedMean+MAFixed.MOE_MetaAnalysedMean) - low)) / range);
-    rescaleData[0] = { mean:rescale.mean, ll:rescale.ll, ul:rescale.ul };
-    for (j=0; j<120; j++) {
-    	if ((j === (rescaleData[0].ll+10)) || (j === (rescaleData[0].ul+10)) || (j === (rescaleData[0].mean+10))) {
-    		document.getElementById("temp").innerHTML += "<div id=\"fixed" + j + "\">.</div>"; 
-    	} else {
-			document.getElementById("temp").innerHTML += ".";
-    	}
-    }
-    document.getElementById("fixed"+(rescaleData[0].ll+10)).innerHTML = "[";
-    document.getElementById("fixed"+(rescaleData[0].ul+10)).innerHTML = "]";
-    document.getElementById("fixed"+(rescaleData[0].mean+10)).innerHTML = "|";
-    document.getElementById("temp").innerHTML += "<-- FIXED EFFECTS MODEL<br />";
-    // plot random effects model
-    rescale.mean = Math.round((100 * (MARandom.MetaAnalysedMean - low)) / range);
-    rescale.ll = Math.round((100 * ((MARandom.MetaAnalysedMean-MARandom.MOE_MetaAnalysedMean) - low)) / range);
-    rescale.ul = Math.round((100 * ((MARandom.MetaAnalysedMean+MARandom.MOE_MetaAnalysedMean) - low)) / range);
-    rescaleData[0] = { mean:rescale.mean, ll:rescale.ll, ul:rescale.ul };
-    for (j=0; j<120; j++) {
-    	if ((j === (rescaleData[0].ll+10)) || (j === (rescaleData[0].ul+10)) || (j === (rescaleData[0].mean+10))) {
-    		document.getElementById("temp").innerHTML += "<div id=\"random" + j + "\">.</div>"; 
-    	} else {
-			document.getElementById("temp").innerHTML += ".";
-    	}
-    }
-    document.getElementById("random"+(rescaleData[0].ll+10)).innerHTML = "[";
-    document.getElementById("random"+(rescaleData[0].ul+10)).innerHTML = "]";
-    document.getElementById("random"+(rescaleData[0].mean+10)).innerHTML = "|";
-    document.getElementById("temp").innerHTML += "<-- RANDOM EFFECTS MODEL<br />";
-}
-*/
