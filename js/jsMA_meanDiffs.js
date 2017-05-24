@@ -4,7 +4,7 @@ $(function() {
 	// set the 'add a study' button behaviour
 	$('#add').click(function() {
 		// add the html for a new study
-		$('#studies').append("<div>" + "M<sub>1</sub>: <input type=\"number\" value=\"\"></input>" + "SD<sub>1</sub>: <input type=\"number\" value=\"\"></input>" + "N<sub>1</sub>: <input type=\"number\" value=\"\"></input>M<sub>2</sub>: <input type=\"number\" value=\"\"></input>" + "SD<sub>2</sub>: <input type=\"number\" value=\"\"></input>" + "N<sub>2</sub>: <input type=\"number\" value=\"\"></input>" + "<input type=\"button\" value=\"remove\" class=\"remove\"></input>" + "<br />" + "</div>");
+		$('#studies').append("<div>" + "M<sub>1</sub>: <input type=\"number\" value=\"\"></input>" + "SD<sub>1</sub>: <input type=\"number\" value=\"\"></input>" + "N<sub>1</sub>: <input type=\"number\" value=\"\"></input>M<sub>2</sub>: <input type=\"number\" value=\"\"></input>" + "SD<sub>2</sub>: <input type=\"number\" value=\"\"></input>" + "N<sub>2</sub>: <input type=\"number\" value=\"\"></input>" + "<button class=\"remove\">remove</button><br /></div>");
 		// add the remove button behaviour
 		$('#studies div:last .remove').click(function() {
 			if ($('#studies div').length > 2) { $(this).parent().detach(); } // if 3+ studies, remove the row
