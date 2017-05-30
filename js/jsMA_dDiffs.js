@@ -58,38 +58,51 @@ $(function() {
 		if (!dataOK) { alert("Error with data entry. Each study must have two groups with: d, N1, N2 (min N = 2)."); return; }
 		
 		/* step 2: gather data for analysis */
-		// BOOKMARK -- need to update the remainder from here onward...
 		var maData = getData(); // get form data and inferential stats for individual studies
-		maData.fixedWeights = getFixedWeightSums(maData.dataSet); // get fixed weights
-		maData.heterogeneity = getHeterogeneity(maData.fixedWeights, maData.df, maData.alpha); // get heterogeneity measures
+		maData.fixedWeightsD = getFixedWeightSums(maData.dataSet, "d"); // get fixed weights for d
+		maData.fixedWeightsDUnb = getFixedWeightSums(maData.dataSet, "dUnb"); // get fixed weights for unbiased d
+		maData.heterogeneityD = getHeterogeneity(maData.fixedWeightsD, maData.df, maData.alpha); // get heterogeneity measures for d
+		maData.heterogeneityDUnb = getHeterogeneity(maData.fixedWeightsDUnb, maData.df, maData.alpha); // get heterogeneity measures for unbiased d
 		for (var i = 0; i < maData.dataSet.length; i++) { // for each study in the dataset, add in its random model variance and weight
-			maData.dataSet[i].randomVariance = (1 / maData.dataSet[i].weight) + maData.heterogeneity.tSq; // random model variance
-			maData.dataSet[i].randomWeight = 1 / maData.dataSet[i].randomVariance; // random model weight
+			maData.dataSet[i].randomVarianceD = (1 / maData.dataSet[i].dWeight) + maData.heterogeneityD.tSq; // random model variance for d
+			maData.dataSet[i].randomWeightD = 1 / maData.dataSet[i].randomVarianceD; // random model weight for d
+			maData.dataSet[i].randomVarianceDUnb = (1 / maData.dataSet[i].dUnbWeight) + maData.heterogeneityDUnb.tSq; // random model variance for unbiased d
+			maData.dataSet[i].randomWeightDUnb = 1 / maData.dataSet[i].randomVarianceDUnb; // random model weight for unbiased d
 		}
-		maData.randomWeights = getRandomWeightSums(maData.dataSet); // get random weights
+		maData.randomWeightsD = getRandomWeightSums(maData.dataSet, "d"); // get random weights for d
+		maData.randomWeightsDUnb = getRandomWeightSums(maData.dataSet, "dUnb"); // get random weights for unbiased d
 		
 		/* step 3: meta-analysis calculations */
-		maData.fixed = metaAnalyse(maData.fixedWeights, maData.alpha, maData.nullMean); // run the fixed model meta-analysis
-		maData.random = metaAnalyse(maData.randomWeights, maData.alpha, maData.nullMean); // run the random model meta-analysis
+		maData.fixedD = metaAnalyse(maData.fixedWeightsD, maData.alpha, maData.nullMean); // run the fixed model meta-analysis for d
+		maData.randomD = metaAnalyse(maData.randomWeightsD, maData.alpha, maData.nullMean); // run the random model meta-analysis for d
+		maData.fixedDUnb = metaAnalyse(maData.fixedWeightsDUnb, maData.alpha, maData.nullMean); // run the fixed model meta-analysis for unbiased d
+		maData.randomDUnb = metaAnalyse(maData.randomWeightsDUnb, maData.alpha, maData.nullMean); // run the random model meta-analysis for unbiased d
 		
 		/* step 4: display meta-analysis results */
 		$('#display *').detach(); // first clear the display
 		for (var i = 0; i < maData.dataSet.length; i++) { // then loop through each study and display its data
-			$('#display').append("<div>Study #" + (i+1) + " M<sub>Diff</sub> = " + maData.dataSet[i].mDiff.toFixed(2) + " Pooled SD = " + maData.dataSet[i].pooledSD.toFixed(2) + " VarDiff = " + maData.dataSet[i].varDiff.toFixed(2) + " MoE = " + maData.dataSet[i].moeDiff.toFixed(2) + " Weight = " + maData.dataSet[i].weight.toFixed(2) + " t = " + maData.dataSet[i].t.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
+			$('#display').append("<div>Study #" + (i+1) + " d = " + maData.dataSet[i].d.toFixed(3) + " d<sub>Unbiased</sub> = " + maData.dataSet[i].dUnb.toFixed(3) + " dLL = " + maData.dataSet[i].dLL.toFixed(2) + " dUL = " + maData.dataSet[i].dUL.toFixed(2) + " dWeight = " + maData.dataSet[i].dWeight.toFixed(2) + " t = " + maData.dataSet[i].t.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
 		}
-		displayModel(maData.fixed, "FIXED"); // then display the fixed model
-		displayModel(maData.random, "RANDOM"); // then display the random model
-		// then display the heterogeneity information
-		$('#display').append("<div>" + "HETEROGENEITY INFORMATION<br />" + " Q = " + maData.heterogeneity.q.toFixed(2) + " C = " + maData.heterogeneity.c.toFixed(2) + " Tau<sup>2</sup> = " + maData.heterogeneity.tSq.toFixed(2) + " Tau = " + maData.heterogeneity.t.toFixed(2) + " I<sup>2</sup> = " + (maData.heterogeneity.iSq * 100).toFixed(2) + "%" + " B1 = " + maData.heterogeneity.b1.toFixed(2) + " B2 = " + maData.heterogeneity.b2.toFixed(2) + " L = " + maData.heterogeneity.l.toFixed(2) + " U = " + maData.heterogeneity.u.toFixed(2) + " LL Tau<sup>2</sup> = " + maData.heterogeneity.lltSq.toFixed(2) + " UL Tau<sup>2</sup> = " + maData.heterogeneity.ultSq.toFixed(2) + " LL Tau = " + maData.heterogeneity.llt.toFixed(2) + " UL Tau = " + maData.heterogeneity.ult.toFixed(2) + " p = " + maData.heterogeneity.p.toFixed(3) + "</div>");
+		displayModel(maData.fixedD, "FIXED (using d)"); // then display the fixed model for d
+		displayModel(maData.fixedDUnb, "FIXED (using unbiased d)"); // then display the fixed model for unbiased d
+		displayModel(maData.randomD, "RANDOM (using d)"); // then display the random model for d
+		displayModel(maData.randomDUnb, "RANDOM (using unbiased d)"); // then display the random model for unbiased d
+		// then display the heterogeneity information for d
+		$('#display').append("<div>" + "HETEROGENEITY INFORMATION (for d)<br />" + " Q = " + maData.heterogeneityD.q.toFixed(2) + " C = " + maData.heterogeneityD.c.toFixed(2) + " Tau<sup>2</sup> = " + maData.heterogeneityD.tSq.toFixed(2) + " Tau = " + maData.heterogeneityD.t.toFixed(2) + " I<sup>2</sup> = " + (maData.heterogeneityD.iSq * 100).toFixed(2) + "%" + " B1 = " + maData.heterogeneityD.b1.toFixed(2) + " B2 = " + maData.heterogeneityD.b2.toFixed(2) + " L = " + maData.heterogeneityD.l.toFixed(2) + " U = " + maData.heterogeneityD.u.toFixed(2) + " LL Tau<sup>2</sup> = " + maData.heterogeneityD.lltSq.toFixed(2) + " UL Tau<sup>2</sup> = " + maData.heterogeneityD.ultSq.toFixed(2) + " LL Tau = " + maData.heterogeneityD.llt.toFixed(2) + " UL Tau = " + maData.heterogeneityD.ult.toFixed(2) + " p = " + maData.heterogeneityD.p.toFixed(3) + "</div>");
+		// then display the heterogeneity information for unbiased d
+		$('#display').append("<div>" + "HETEROGENEITY INFORMATION (for unbiased d)<br />" + " Q = " + maData.heterogeneityDUnb.q.toFixed(2) + " C = " + maData.heterogeneityDUnb.c.toFixed(2) + " Tau<sup>2</sup> = " + maData.heterogeneityDUnb.tSq.toFixed(2) + " Tau = " + maData.heterogeneityDUnb.t.toFixed(2) + " I<sup>2</sup> = " + (maData.heterogeneityDUnb.iSq * 100).toFixed(2) + "%" + " B1 = " + maData.heterogeneityDUnb.b1.toFixed(2) + " B2 = " + maData.heterogeneityDUnb.b2.toFixed(2) + " L = " + maData.heterogeneityDUnb.l.toFixed(2) + " U = " + maData.heterogeneityDUnb.u.toFixed(2) + " LL Tau<sup>2</sup> = " + maData.heterogeneityDUnb.lltSq.toFixed(2) + " UL Tau<sup>2</sup> = " + maData.heterogeneityDUnb.ultSq.toFixed(2) + " LL Tau = " + maData.heterogeneityDUnb.llt.toFixed(2) + " UL Tau = " + maData.heterogeneityDUnb.ult.toFixed(2) + " p = " + maData.heterogeneityDUnb.p.toFixed(3) + "</div>");
 		
 		/* step 5: output data to csv in a <textarea> */
-		var csv = "INDIVIDUAL STUDIES\nStudy ID,Mean 1,Standard Deviation 1,N 1,Mean 2,Standard Deviation 2,N 2,Mean Difference,Pooled Standard Deviation,Variance of Difference,Margin of Error of Difference,Study Weight (fixed),t value,p value\n";
+		var csv = "INDIVIDUAL STUDIES\nStudy ID,d,Unbiased d,N 1,N 2,dLL,dUL,d Study Weight (fixed),Unbiased d Study Weight (fixed),t value,p value\n";
 		for (var i = 0; i < maData.dataSet.length; i++) {
-			csv += String(i+1) + "," + maData.dataSet[i].m1 + "," + maData.dataSet[i].sd1 + "," + maData.dataSet[i].n1 + "," + maData.dataSet[i].m2 + "," + maData.dataSet[i].sd2 + "," + maData.dataSet[i].n2 + "," + maData.dataSet[i].mDiff + "," + maData.dataSet[i].pooledSD + "," + maData.dataSet[i].varDiff + "," + maData.dataSet[i].moeDiff + "," + maData.dataSet[i].weight + "," + maData.dataSet[i].t + "," + maData.dataSet[i].p + "\n";
+			csv += String(i+1) + "," + maData.dataSet[i].d + "," + maData.dataSet[i].dUnb + "," + maData.dataSet[i].n1 + "," + maData.dataSet[i].n2 + "," + maData.dataSet[i].dLL + "," + maData.dataSet[i].dUL + "," + maData.dataSet[i].dWeight + "," + maData.dataSet[i].dUnbWeight + "," + maData.dataSet[i].t + "," + maData.dataSet[i].p + "\n";
 		}
-		csv += "\nFIXED EFFECTS MODEL\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixed.mean + "," + maData.fixed.sd + "," + maData.fixed.variance + "," + maData.fixed.moe + "," + maData.fixed.ll + "," + maData.fixed.ul + "," + maData.fixed.z + "," + maData.fixed.p + "\n";
-		csv += "\nRANDOM EFFECTS MODEL\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.random.mean + "," + maData.random.sd + "," + maData.random.variance + "," + maData.random.moe + "," + maData.random.ll + "," + maData.random.ul + "," + maData.random.z + "," + maData.random.p + "\n";
-		csv += "\nHETEROGENEITY INFORMATION\nQ,C,Tau squared,Tau,I squared,B1,B2,L,U,Lower Limit CI Tau squared,Upper Limit CI Tau squared,Lower Limit CI Tau,Upper Limit CI Tau,p value\n" + maData.heterogeneity.q + "," + maData.heterogeneity.c + "," + maData.heterogeneity.tSq + "," + maData.heterogeneity.t + "," + maData.heterogeneity.iSq + "," + maData.heterogeneity.b1 + "," + maData.heterogeneity.b2 + "," + maData.heterogeneity.l + "," + maData.heterogeneity.u + "," + maData.heterogeneity.lltSq + "," + maData.heterogeneity.ultSq + "," + maData.heterogeneity.llt + "," + maData.heterogeneity.ult + "," + maData.heterogeneity.p + "\n";
+		csv += "\nFIXED EFFECTS MODEL (d)\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixedD.mean + "," + maData.fixedD.sd + "," + maData.fixedD.variance + "," + maData.fixedD.moe + "," + maData.fixedD.ll + "," + maData.fixedD.ul + "," + maData.fixedD.z + "," + maData.fixedD.p + "\n";
+		csv += "\nFIXED EFFECTS MODEL (unbiased d)\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixedDUnb.mean + "," + maData.fixedDUnb.sd + "," + maData.fixedDUnb.variance + "," + maData.fixedDUnb.moe + "," + maData.fixedDUnb.ll + "," + maData.fixedDUnb.ul + "," + maData.fixedDUnb.z + "," + maData.fixedDUnb.p + "\n";
+		csv += "\nRANDOM EFFECTS MODEL (d)\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.randomD.mean + "," + maData.randomD.sd + "," + maData.randomD.variance + "," + maData.randomD.moe + "," + maData.randomD.ll + "," + maData.randomD.ul + "," + maData.randomD.z + "," + maData.randomD.p + "\n";
+		csv += "\nRANDOM EFFECTS MODEL (unbiased d)\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.randomDUnb.mean + "," + maData.randomDUnb.sd + "," + maData.randomDUnb.variance + "," + maData.randomDUnb.moe + "," + maData.randomDUnb.ll + "," + maData.randomDUnb.ul + "," + maData.randomDUnb.z + "," + maData.randomDUnb.p + "\n";
+		csv += "\nHETEROGENEITY INFORMATION (d)\nQ,C,Tau squared,Tau,I squared,B1,B2,L,U,Lower Limit CI Tau squared,Upper Limit CI Tau squared,Lower Limit CI Tau,Upper Limit CI Tau,p value\n" + maData.heterogeneityD.q + "," + maData.heterogeneityD.c + "," + maData.heterogeneityD.tSq + "," + maData.heterogeneityD.t + "," + maData.heterogeneityD.iSq + "," + maData.heterogeneityD.b1 + "," + maData.heterogeneityD.b2 + "," + maData.heterogeneityD.l + "," + maData.heterogeneityD.u + "," + maData.heterogeneityD.lltSq + "," + maData.heterogeneityD.ultSq + "," + maData.heterogeneityD.llt + "," + maData.heterogeneityD.ult + "," + maData.heterogeneityD.p + "\n";
+		csv += "\nHETEROGENEITY INFORMATION (unbiased d)\nQ,C,Tau squared,Tau,I squared,B1,B2,L,U,Lower Limit CI Tau squared,Upper Limit CI Tau squared,Lower Limit CI Tau,Upper Limit CI Tau,p value\n" + maData.heterogeneityDUnb.q + "," + maData.heterogeneityDUnb.c + "," + maData.heterogeneityDUnb.tSq + "," + maData.heterogeneityDUnb.t + "," + maData.heterogeneityDUnb.iSq + "," + maData.heterogeneityDUnb.b1 + "," + maData.heterogeneityDUnb.b2 + "," + maData.heterogeneityDUnb.l + "," + maData.heterogeneityDUnb.u + "," + maData.heterogeneityDUnb.lltSq + "," + maData.heterogeneityDUnb.ultSq + "," + maData.heterogeneityDUnb.llt + "," + maData.heterogeneityDUnb.ult + "," + maData.heterogeneityDUnb.p + "\n";
 		$('#display').append("<p>Copy the text below to save as .csv</p><textarea>" + csv + "</textarea>");
 		$('#display textarea').width($(document).width()-50);
 		$('#display textarea').height(200);
@@ -145,58 +158,107 @@ function getData() {
 	maData.alpha = (100 - maData.ci) / 100; // alpha
 	maData.dataSet = new Array(); // an array to hold the dataset; each item in the array is an object with one study's data
 	var t_crit; // holds critical t value for each study (calculated via jStat)
-	var studyData = { m1:null, sd1:null, n1:null, m2:null, sd2:null, n2:null, mDiff:null, pooledSD:null, varDiff:null, moeDiff:null, weight:null, t:null, p:null }; // an object for study data
+	var studyData = { d:null, n1:null, n2:null, dMod:null, dUnb:null, dVar:null, dUnbVar:null, df:null, ncp:null, sqrtN12:null, apxncpL:null, apxncpU:null, tailLnow:null, tailUnow:null, ncpL:null, ncpU:null, tbzL:null, tbzU:null, dLL:null, dUL:null, dMoeL:null, dMoeU:null, dUnbMoeL:null, dUnbMoeU:null, dWeight:null, dUnbWeight:null, t:null, p:null }; // an object for study data
 	// loop through the studies
 	$('#studies div').each(function(index) {
-		// get each group's M, SD, and N
+		// get each group's Cohen's d, N1, and N2
 		$(this).children('input').each(function(index) {
 			switch(index) {
 				case 0:
-					studyData.m1 = Number($(this).val()); // Group 1 Mean
+					studyData.d = Number($(this).val()); // Cohen's d
 					break;
 				case 1:
-					studyData.sd1 = Number($(this).val()); // Group 1 SD
-					break;
-				case 2:
 					studyData.n1 = Number($(this).val()); // Group 1 N
 					break;
-				case 3:
-					studyData.m2 = Number($(this).val()); // Group 2 Mean
-					break;
-				case 4:
-					studyData.sd2 = Number($(this).val()); // Group 2 SD
-					break;
-				case 5:
+				case 2:
 					studyData.n2 = Number($(this).val()); // Group 2 N
 					break;
 				default:
 					break;
 			}
 		});
-		studyData.mDiff = studyData.m2 - studyData.m1; // calculate mean difference
-		studyData.pooledSD = Math.sqrt(((studyData.n1-1)*Math.pow(studyData.sd1,2) + (studyData.n2-1)*Math.pow(studyData.sd2,2)) / (studyData.n1+studyData.n2-2)); // calculate pooled standard deviation
-		studyData.varDiff = Math.pow(studyData.pooledSD,2) * ((1 / studyData.n1) + (1 / studyData.n2)); // calculate variance of the difference
-		t_crit = jStat.studentt.inv((1-(maData.alpha/2)), (studyData.n1+studyData.n2-2)); // calculate critical t value
-		studyData.moeDiff = t_crit * Math.sqrt(studyData.varDiff); // calculate margin of error of difference
-		studyData.weight = 1 / studyData.varDiff; // calculate (fixed) study weight
-		studyData.t = (studyData.mDiff - maData.nullMean) / Math.sqrt(studyData.varDiff); // calculate t value
+		studyData.sqrtN12 = Math.sqrt(1/studyData.n1 + 1/studyData.n2); // square root of (1/N1 + 1/N2)
+		studyData.ncp = studyData.d / studyData.sqrtN12; // non-central parameter
+		studyData.df = studyData.n1 + studyData.n2 - 2; // study's degrees of freedom
+		t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.df); // critical t
+		studyData.apxncpL = studyData.ncp - t_crit; // approx non-central L
+		studyData.apxncpU = studyData.ncp + t_crit; // approx non-central U
+		// BOOKMARK
+		// need to use non-central t distribution to get ncpL and ncpU
+		// currently only runs once, but needs to iterate, reducing the difference between tailXnow and tbzX until (near?) 0 -- see the excel sheet
+		// use the approximations for now (apxncpL and apxncpU)
+		studyData.tailLnow = 1 - nonCentralT(studyData.ncp, studyData.apxncpL, studyData.df);
+		studyData.tailUnow = nonCentralT(studyData.ncp, studyData.apxncpU, studyData.df);
+		studyData.dLL = studyData.apxncpL * studyData.sqrtN12; // replace with the below once iteration is built in
+		studyData.dUL = studyData.apxncpU * studyData.sqrtN12; // replace with the below once iteration is built in
+		//studyData.dLL = studyData.ncpL * studyData.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
+		//studyData.dUL = studyData.ncpU * studyData.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
+		studyData.dMod = Math.exp(jStat.gammaln(studyData.df/2)) / (Math.sqrt(studyData.df/2) * Math.exp(jStat.gammaln((studyData.df/2)-0.5))); // modifier for unbiased d
+		studyData.dUnb = studyData.d * studyData.dMod; // unbiased d
+		studyData.dMoeL = studyData.d - studyData.dLL; // lower margin of error for d
+		studyData.dMoeU = studyData.dUL - studyData.d; // upper margin of error for d
+		studyData.dUnbMoeL = studyData.dUnb - studyData.dLL; // lower margin of error for unbiased d
+		studyData.dUnbMoeU = studyData.dUL - studyData.dUnb; // upper margin of error for unbiased d
+		studyData.dVar = (studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2 * (studyData.n1+studyData.n2)); // calculate d variance
+		studyData.dWeight = 1 / studyData.dVar; // calculate study weight when using d
+		studyData.dUnbVar = studyData.dMod * studyData.dMod * ((studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2 * (studyData.n1+studyData.n2))); // calculate unbiased d variance
+		studyData.dUnbWeight = 1 / studyData.dUnbVar; // calculate study weight when using unbiased d
+		studyData.t = (studyData.dUnb - maData.nullMean) / Math.sqrt((studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2*(studyData.n1+studyData.n2))); // calculate t
 		studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), (studyData.n1+studyData.n2-2)))); // calculate p value
 		// add the study's data to the data array
-		maData.dataSet[index] = { m1:studyData.m1, sd1:studyData.sd1, n1:studyData.n1, m2:studyData.m2, sd2:studyData.sd2, n2:studyData.n2, mDiff:studyData.mDiff, pooledSD:studyData.pooledSD, varDiff:studyData.varDiff, moeDiff:studyData.moeDiff, weight:studyData.weight, t:studyData.t, p:studyData.p, randomVariance:null, randomWeight:null };
+		maData.dataSet[index] = { d:studyData.d, n1:studyData.n1, n2:studyData.n2, dMod:studyData.dMod, dUnb:studyData.dUnb, dVar:studyData.dVar, dUnbVar:studyData.dUnbVar, df:studyData.df, ncp:studyData.ncp, sqrtN12:studyData.sqrtN12, apxncpL:studyData.apxncpL, apxncpU:studyData.apxncpU, tailLnow:studyData.tailLnow, tailUnow:studyData.tailUnow, ncpL:studyData.ncpL, ncpU:studyData.ncpU, tbzL:studyData.tbzL, tbzU:studyData.tbzU, dLL:studyData.dLL, dUL:studyData.dUL, dMoeL:studyData.dMoeL, dMoeU:studyData.dMoeU, dUnbMoeL:studyData.dUnbMoeL, dUnbMoeU:studyData.dUnbMoeU, dWeight:studyData.dWeight, dUnbWeight:studyData.dUnbWeight, t:studyData.t, p:studyData.p, randomVarianceD:null, randomWeightD:null, randomVarianceDUnb:null, randomWeightDUnb:null };
 	});
 	return maData;
 }
 
+// calculate CIs using non-central t function
+function nonCentralT(t, ncp, df) {
+	var df2, tOverSqrtDF, pointSep, pointSepTmp, constant, i, nct;
+	df2 = df - 1; // degrees of freedom - 1
+	tOverSqrtDF = t / Math.sqrt(df); // t overt square root of degrees of freedom
+	pointSep = (Math.sqrt(df)+7)/100; // separation of points
+	constant = Math.exp((2 - df) * 0.5 * Math.log(2) - jStat.gammaln(df/2)) * pointSep / 3; // constant
+	// first term in cross product summation (df=0 has its own variant)
+	if (df2 > 0) { nct = jStat.normal.cdf(0 * tOverSqrtDF - ncp, 0, 1) * Math.pow(0, df2) * Math.exp(-0.5 * 0 * 0); }
+	else { nct = jStat.normal.cdf(0 * tOverSqrtDF - ncp, 0, 1) * Math.exp(-0.5 * 0 * 0); }
+	// add second term with multiplier of 4
+	nct += 4 * jStat.normal.cdf(pointSep * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSep, df2) * Math.exp(-0.5 * pointSep * pointSep);
+	// loop to add 98 values
+	for (i = 1; i < 50; i++) {
+		pointSepTmp = 2 * i * pointSep;
+		nct += 2 * jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
+		pointSepTmp += pointSep;
+		nct += 4 * jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
+	}
+	// add last term
+	pointSepTmp += pointSep;
+	nct += jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
+	// multiply by the constant
+	nct *= constant;
+	return nct;
+}
+
 // calculate summed weights for fixed effects model, return as object of 4 values
-function getFixedWeightSums(dataset) {
+function getFixedWeightSums(dataset, dType) {
     var i, fixedWeights = { sumWeights:0, sumWeightsTimesMeans:0, sumWeightsTimesSquaredMeans:0, sumSquaredWeights:0 }; // create an object to hold the weight values
-    // for each study, add the weight measures, resulting in summed weights
-    for (i = 0; i < dataset.length; i++) {
-        fixedWeights.sumWeights += dataset[i].weight;
-        fixedWeights.sumWeightsTimesMeans += ( dataset[i].weight * dataset[i].mDiff );
-        fixedWeights.sumWeightsTimesSquaredMeans += ( dataset[i].weight * ( dataset[i].mDiff * dataset[i].mDiff ) );
-        fixedWeights.sumSquaredWeights += ( dataset[i].weight * dataset[i].weight );
-    }
+    // determine which effect size's weights we're calculating (d or unbiased d)
+    if (dType === "d") {
+		// for each study, add the weight measures, resulting in summed weights
+		for (i = 0; i < dataset.length; i++) {
+			fixedWeights.sumWeights += dataset[i].dWeight;
+			fixedWeights.sumWeightsTimesMeans += ( dataset[i].dWeight * dataset[i].d );
+			fixedWeights.sumWeightsTimesSquaredMeans += ( dataset[i].dWeight * ( dataset[i].d * dataset[i].d ) );
+			fixedWeights.sumSquaredWeights += ( dataset[i].dWeight * dataset[i].dWeight );
+		}
+    } else if (dType === "dUnb") {
+		// for each study, add the weight measures, resulting in summed weights
+		for (i = 0; i < dataset.length; i++) {
+			fixedWeights.sumWeights += dataset[i].dUnbWeight;
+			fixedWeights.sumWeightsTimesMeans += ( dataset[i].dUnbWeight * dataset[i].dUnb );
+			fixedWeights.sumWeightsTimesSquaredMeans += ( dataset[i].dUnbWeight * ( dataset[i].dUnb * dataset[i].dUnb ) );
+			fixedWeights.sumSquaredWeights += ( dataset[i].dUnbWeight * dataset[i].dUnbWeight );
+		}
+    } else { alert("Error."); }
     return fixedWeights;
 }
 
@@ -225,12 +287,20 @@ function getHeterogeneity(weights, df, alpha) {
 }
 
 // calculate summed weights for random effects model, return as object of 2 values
-function getRandomWeightSums(dataset) {
+function getRandomWeightSums(dataset, dType) {
     var randomWeights = { sumWeightsTimesMeans:0, sumWeights:0 }; // object to hold weight values (initially zero)
-    for (var i=0;i<dataset.length;i++) { // loop through each study
-        randomWeights.sumWeightsTimesMeans += dataset[i].randomWeight * dataset[i].mDiff; // add study's weight * mean difference
-        randomWeights.sumWeights += dataset[i].randomWeight; // add study's weight
-    }
+    // check whether calculating for d or unbiased d
+    if (dType === "d") {
+		for (var i=0;i<dataset.length;i++) { // loop through each study
+			randomWeights.sumWeightsTimesMeans += dataset[i].randomWeightD * dataset[i].d; // add study's weight * mean difference
+			randomWeights.sumWeights += dataset[i].randomWeightD; // add study's weight
+		}
+    } else if (dType === "dUnb") {
+		for (var i=0;i<dataset.length;i++) { // loop through each study
+			randomWeights.sumWeightsTimesMeans += dataset[i].randomWeightD * dataset[i].dUnb; // add study's weight * mean difference
+			randomWeights.sumWeights += dataset[i].randomWeightD; // add study's weight
+		}
+    } else { alert("Error."); }
     return randomWeights; // pass back the data
 }
 
