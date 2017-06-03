@@ -158,7 +158,8 @@ function getData() {
 	maData.alpha = (100 - maData.ci) / 100; // alpha
 	maData.dataSet = new Array(); // an array to hold the dataset; each item in the array is an object with one study's data
 	var t_crit; // holds critical t value for each study (calculated via jStat)
-	var studyData = { d:null, n1:null, n2:null, dMod:null, dUnb:null, dVar:null, dUnbVar:null, df:null, ncp:null, sqrtN12:null, apxncpL:null, apxncpU:null, tailLnow:null, tailUnow:null, ncpL:null, ncpU:null, tbzL:null, tbzU:null, dLL:null, dUL:null, dMoeL:null, dMoeU:null, dUnbMoeL:null, dUnbMoeU:null, dWeight:null, dUnbWeight:null, t:null, p:null }; // an object for study data
+	var targetP = maData.alpha / 2; // target p to converge on for calculating CIs on d
+	var studyData = { d:null, n1:null, n2:null, dMod:null, dUnb:null, dVar:null, dUnbVar:null, df:null, ncp:null, sqrtN12:null, ncpL:null, ncpU:null, dLL:null, dUL:null, dMoeL:null, dMoeU:null, dUnbMoeL:null, dUnbMoeU:null, dWeight:null, dUnbWeight:null, t:null, p:null }; // an object for study data
 	// loop through the studies
 	$('#studies div').each(function(index) {
 		// get each group's Cohen's d, N1, and N2
@@ -181,18 +182,12 @@ function getData() {
 		studyData.ncp = studyData.d / studyData.sqrtN12; // non-central parameter
 		studyData.df = studyData.n1 + studyData.n2 - 2; // study's degrees of freedom
 		t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.df); // critical t
-		studyData.apxncpL = studyData.ncp - t_crit; // approx non-central L
-		studyData.apxncpU = studyData.ncp + t_crit; // approx non-central U
-		// BOOKMARK
-		// need to use non-central t distribution to get ncpL and ncpU
-		// currently only runs once, but needs to iterate, reducing the difference between tailXnow and tbzX until (near?) 0 -- see the excel sheet
-		// use the approximations for now (apxncpL and apxncpU)
-		studyData.tailLnow = 1 - nonCentralT(studyData.ncp, studyData.apxncpL, studyData.df);
-		studyData.tailUnow = nonCentralT(studyData.ncp, studyData.apxncpU, studyData.df);
-		studyData.dLL = studyData.apxncpL * studyData.sqrtN12; // replace with the below once iteration is built in
-		studyData.dUL = studyData.apxncpU * studyData.sqrtN12; // replace with the below once iteration is built in
-		//studyData.dLL = studyData.ncpL * studyData.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
-		//studyData.dUL = studyData.ncpU * studyData.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
+		studyData.ncpL = studyData.ncp - t_crit; // first guess for ncpL
+		studyData.ncpU = studyData.ncp + t_crit; // first guess for ncpU
+		studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1-targetP), Tol: 0.0000000001 }); // use goalSeek to find better ncpL
+		studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: targetP, Tol: 0.0000000001 }); // use goalSeek to find better ncpU
+		studyData.dLL = studyData.ncpL * studyData.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
+		studyData.dUL = studyData.ncpU * studyData.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
 		studyData.dMod = Math.exp(jStat.gammaln(studyData.df/2)) / (Math.sqrt(studyData.df/2) * Math.exp(jStat.gammaln((studyData.df/2)-0.5))); // modifier for unbiased d
 		studyData.dUnb = studyData.d * studyData.dMod; // unbiased d
 		studyData.dMoeL = studyData.d - studyData.dLL; // lower margin of error for d
@@ -206,7 +201,7 @@ function getData() {
 		studyData.t = (studyData.dUnb - maData.nullMean) / Math.sqrt((studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2*(studyData.n1+studyData.n2))); // calculate t
 		studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), (studyData.n1+studyData.n2-2)))); // calculate p value
 		// add the study's data to the data array
-		maData.dataSet[index] = { d:studyData.d, n1:studyData.n1, n2:studyData.n2, dMod:studyData.dMod, dUnb:studyData.dUnb, dVar:studyData.dVar, dUnbVar:studyData.dUnbVar, df:studyData.df, ncp:studyData.ncp, sqrtN12:studyData.sqrtN12, apxncpL:studyData.apxncpL, apxncpU:studyData.apxncpU, tailLnow:studyData.tailLnow, tailUnow:studyData.tailUnow, ncpL:studyData.ncpL, ncpU:studyData.ncpU, tbzL:studyData.tbzL, tbzU:studyData.tbzU, dLL:studyData.dLL, dUL:studyData.dUL, dMoeL:studyData.dMoeL, dMoeU:studyData.dMoeU, dUnbMoeL:studyData.dUnbMoeL, dUnbMoeU:studyData.dUnbMoeU, dWeight:studyData.dWeight, dUnbWeight:studyData.dUnbWeight, t:studyData.t, p:studyData.p, randomVarianceD:null, randomWeightD:null, randomVarianceDUnb:null, randomWeightDUnb:null };
+		maData.dataSet[index] = { d:studyData.d, n1:studyData.n1, n2:studyData.n2, dMod:studyData.dMod, dUnb:studyData.dUnb, dVar:studyData.dVar, dUnbVar:studyData.dUnbVar, df:studyData.df, ncp:studyData.ncp, sqrtN12:studyData.sqrtN12, ncpL:studyData.ncpL, ncpU:studyData.ncpU, dLL:studyData.dLL, dUL:studyData.dUL, dMoeL:studyData.dMoeL, dMoeU:studyData.dMoeU, dUnbMoeL:studyData.dUnbMoeL, dUnbMoeU:studyData.dUnbMoeU, dWeight:studyData.dWeight, dUnbWeight:studyData.dUnbWeight, t:studyData.t, p:studyData.p, randomVarianceD:null, randomWeightD:null, randomVarianceDUnb:null, randomWeightDUnb:null };
 	});
 	return maData;
 }
@@ -215,7 +210,7 @@ function getData() {
 function nonCentralT(t, ncp, df) {
 	var df2, tOverSqrtDF, pointSep, pointSepTmp, constant, i, nct;
 	df2 = df - 1; // degrees of freedom - 1
-	tOverSqrtDF = t / Math.sqrt(df); // t overt square root of degrees of freedom
+	tOverSqrtDF = t / Math.sqrt(df); // t over square root of degrees of freedom
 	pointSep = (Math.sqrt(df)+7)/100; // separation of points
 	constant = Math.exp((2 - df) * 0.5 * Math.log(2) - jStat.gammaln(df/2)) * pointSep / 3; // constant
 	// first term in cross product summation (df=0 has its own variant)
