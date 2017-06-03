@@ -5,11 +5,12 @@
 		<link rel="stylesheet" type="text/css" href="./css/style.css">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.6.0/jstat.min.js" integrity="sha256-YDpvU2WSVH8p/EEd08TXCj6SQryOim28OkUZ4yVUmu4=" crossorigin="anonymous"></script>
 		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
-  		<script type="text/javascript" src="./js/jsMA_means.js"></script>
+		<script type="text/javascript" src="./js/goalSeek.js"></script>
+  		<script type="text/javascript" src="./js/jsMA_dDiffs.js"></script>
 	</head>
 	<body>
 		<a href="./index.html">&lt;&lt; Back</a><br /><br />
-		Meta-Analysis of single means<br /><br />
+		Meta-Analysis of Cohen's d between two independent means<br /><br />
 		First, select a level of confidence:
 		<select id="ci">
 			<option value="90">90%</option>
@@ -17,10 +18,10 @@
 			<option value="99">99%</option>
 		</select>
 		<br />
-		Then, enter a null-hypothesis mean (default 0): <input type="number" value="0" id="null"></input>
+		Then, enter a null-hypothesis mean difference (default 0): <input type="number" value="0" id="null"></input>
 		<br />
-		Then, for each study, enter its MEAN, STANDARD DEVIATION and N using the form below.<br />
-		Alternatively, paste comma separated values into the text box below (M,SD,N), then click the Update form button.<br />
+		Then, for each study, enter Cohen's d, and each group's N using the form below.<br />
+		Alternatively, paste comma separated values into the text box below (d,N<sub>1</sub>,N<sub>2</sub>), then click the Update form button.<br />
 		<textarea id="csv"></textarea><br />
 		<button id="updateCSV">Update form</button><br /><br />
 		<button id="add">Add a study</button>

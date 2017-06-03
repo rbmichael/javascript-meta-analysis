@@ -4,7 +4,7 @@ $(function() {
 	// set the 'add a study' button behaviour
 	$('#add').click(function() {
 		// add the html for a new study
-		$('#studies').append("<div>" + "M: <input type=\"number\" value=\"\"></input>" + "SD: <input type=\"number\" value=\"\"></input>" + "N: <input type=\"number\" value=\"\"></input>" + "<button class=\"remove\">remove</button><br /></div>");
+		$('#studies').append("<div>" + "r: <input type=\"number\" value=\"\"></input>" + "N: <input type=\"number\" value=\"\"></input>" + "<button class=\"remove\">remove</button><br /></div>");
 		// add the remove button behaviour
 		$('#studies div:last .remove').click(function() {
 			if ($('#studies div').length > 2) { $(this).parent().detach(); } // if 3+ studies, remove the row
@@ -32,14 +32,11 @@ $(function() {
 				$('#add').click(); // add a row
 				$('#studies div:last input').each(function(index) { // populate it with data
 					switch (index) {
-						case 0: // insert mean
+						case 0: // insert r
 							$(this).val(data[i][0]);
 							break;
-						case 1: // insert standard deviation
+						case 1: // insert N
 							$(this).val(data[i][1]);
-							break;
-						case 2: // insert n
-							$(this).val(data[i][2]);
 							break;
 						default:
 							break;
@@ -52,10 +49,10 @@ $(function() {
 	// set the 'run' button behaviour
 	$('#run').click(function() {
 		/* step 1: check data entry, proceed if OK, else return error
-			- must have: 2+ studies, with each having m, sd > 0, n >= 2
+			- must have: 2+ studies, with each having r (-1 <= r <= 1), n >= 4
 		*/
 		var dataOK = checkData();
-		if (!dataOK) { alert("Error with data entry. Each study must have M, SD > 0, and N >= 2."); return; }
+		if (!dataOK) { alert("Error with data entry. Each study must have valid Pearson r and N >= 4."); return; }
 		
 		/* step 2: gather data for analysis */
 		var maData = getData(); // get form data and inferential stats for individual studies
@@ -74,7 +71,7 @@ $(function() {
 		/* step 4: display meta-analysis results */
 		$('#display *').detach(); // first clear the display
 		for (var i = 0; i < maData.dataSet.length; i++) { // then loop through each study and display its data
-			$('#display').append("<div>" + "Study #" + (i+1) + " Mean = " + maData.dataSet[i].mean.toFixed(2) + " SD = " + maData.dataSet[i].sd.toFixed(2) + " N = " + maData.dataSet[i].n.toFixed(0) + " SE = " + maData.dataSet[i].se.toFixed(2) + " Var = " + maData.dataSet[i].variance.toFixed(2) + " MoE = " + maData.dataSet[i].moe.toFixed(2) + " Weight = " + maData.dataSet[i].weight.toFixed(2) + " t = " + maData.dataSet[i].t.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
+			$('#display').append("<div>" + "Study #" + (i+1) + " r = " + maData.dataSet[i].r.toFixed(2) + " N = " + maData.dataSet[i].n.toFixed(0) + " rZ = " + maData.dataSet[i].rZ.toFixed(2) + " varZ = " + maData.dataSet[i].varZ.toFixed(2) + " zLL = " + maData.dataSet[i].zLL.toFixed(2) + " zUL = " + maData.dataSet[i].zUL.toFixed(2) + " rLL = " + maData.dataSet[i].rLL.toFixed(2) + " rUL = " + maData.dataSet[i].rUL.toFixed(2) + " Weight = " + maData.dataSet[i].weight.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
 		}
 		displayModel(maData.fixed, "FIXED"); // then display the fixed model
 		displayModel(maData.random, "RANDOM"); // then display the random model
@@ -82,12 +79,12 @@ $(function() {
 		$('#display').append("<div>" + "HETEROGENEITY INFORMATION<br />" + " Q = " + maData.heterogeneity.q.toFixed(2) + " C = " + maData.heterogeneity.c.toFixed(2) + " Tau<sup>2</sup> = " + maData.heterogeneity.tSq.toFixed(2) + " Tau = " + maData.heterogeneity.t.toFixed(2) + " I<sup>2</sup> = " + (maData.heterogeneity.iSq * 100).toFixed(2) + "%" + " B1 = " + maData.heterogeneity.b1.toFixed(2) + " B2 = " + maData.heterogeneity.b2.toFixed(2) + " L = " + maData.heterogeneity.l.toFixed(2) + " U = " + maData.heterogeneity.u.toFixed(2) + " LL Tau<sup>2</sup> = " + maData.heterogeneity.lltSq.toFixed(2) + " UL Tau<sup>2</sup> = " + maData.heterogeneity.ultSq.toFixed(2) + " LL Tau = " + maData.heterogeneity.llt.toFixed(2) + " UL Tau = " + maData.heterogeneity.ult.toFixed(2) + " p = " + maData.heterogeneity.p.toFixed(3) + "</div>");
 		
 		/* step 5: output data to csv in a <textarea> */
-		var csv = "INDIVIDUAL STUDIES\nStudy ID,Mean,Standard Deviation,N,Standard Error,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,Study weight,t value,p value\n";
+		var csv = "INDIVIDUAL STUDIES\nStudy ID,r,N,rZ,varZ,zLL,zUL,rLL,rUL,Weight,p\n";
 		for (var i = 0; i < maData.dataSet.length; i++) {
-			csv += String(i+1) + "," + maData.dataSet[i].mean + "," + maData.dataSet[i].sd + "," + maData.dataSet[i].n + "," + maData.dataSet[i].se + "," + maData.dataSet[i].variance + "," + maData.dataSet[i].moe + "," + (maData.dataSet[i].mean - maData.dataSet[i].moe) + "," + (maData.dataSet[i].mean + maData.dataSet[i].moe) + "," + maData.dataSet[i].weight + "," + maData.dataSet[i].t + "," + maData.dataSet[i].p + "\n";
+			csv += String(i+1) + "," + maData.dataSet[i].r + "," + maData.dataSet[i].n + "," + maData.dataSet[i].rZ + "," + maData.dataSet[i].varZ + "," + maData.dataSet[i].zLL + "," + maData.dataSet[i].zUL + "," + maData.dataSet[i].rLL + "," + maData.dataSet[i].rUL + "," + maData.dataSet[i].weight + "," + maData.dataSet[i].p + "\n";
 		}
-		csv += "\nFIXED EFFECTS MODEL\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixed.mean + "," + maData.fixed.sd + "," + maData.fixed.variance + "," + maData.fixed.moe + "," + maData.fixed.ll + "," + maData.fixed.ul + "," + maData.fixed.z + "," + maData.fixed.p + "\n";
-		csv += "\nRANDOM EFFECTS MODEL\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.random.mean + "," + maData.random.sd + "," + maData.random.variance + "," + maData.random.moe + "," + maData.random.ll + "," + maData.random.ul + "," + maData.random.z + "," + maData.random.p + "\n";
+		csv += "\nFIXED EFFECTS MODEL\nMean r,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixed.Mr + "," + maData.fixed.ll + "," + maData.fixed.ul + "," + maData.fixed.z + "," + maData.fixed.p + "\n";
+		csv += "\nRANDOM EFFECTS MODEL\nMean r,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.random.Mr + "," + maData.random.ll + "," + maData.random.ul + "," + maData.random.z + "," + maData.random.p + "\n";
 		csv += "\nHETEROGENEITY INFORMATION\nQ,C,Tau squared,Tau,I squared,B1,B2,L,U,Lower Limit CI Tau squared,Upper Limit CI Tau squared,Lower Limit CI Tau,Upper Limit CI Tau,p value\n" + maData.heterogeneity.q + "," + maData.heterogeneity.c + "," + maData.heterogeneity.tSq + "," + maData.heterogeneity.t + "," + maData.heterogeneity.iSq + "," + maData.heterogeneity.b1 + "," + maData.heterogeneity.b2 + "," + maData.heterogeneity.l + "," + maData.heterogeneity.u + "," + maData.heterogeneity.lltSq + "," + maData.heterogeneity.ultSq + "," + maData.heterogeneity.llt + "," + maData.heterogeneity.ult + "," + maData.heterogeneity.p + "\n";
 		$('#display').append("<p>Copy the text below to save as .csv</p><textarea>" + csv + "</textarea>");
 		$('#display textarea').width($(document).width()-50);
@@ -103,7 +100,7 @@ $(function() {
 
 });
 
-// data entry check: minimum 2 studies, each with M = a number, SD > 0 and N >= 2
+// data entry check: minimum 2 studies, each with valid r and N >= 4
 function checkData() {
 	var ok = true; // boolean to return
 	if ($('#studies div').length < 2) { ok = false; return ok; } // if fewer than 2 studies, stop (should never happen)
@@ -111,15 +108,12 @@ function checkData() {
 	$('#studies div').each(function(index) {
 		$(this).children('input').each(function(index) { // for each study's input data
 			switch(index) {
-				case 0: // check the Mean
-					if (!$.isNumeric($(this).val())) { ok = false; } // if mean is not a number, set flag to false
+				case 0: // check the r
+					if (!$.isNumeric($(this).val()) || $(this).val() < -1 || $(this).val() > 1) { ok = false; } // if r is not a number, or is < -1, or is > 1, set flag to false
 					break;
-				case 1: // check the SD
-					if (!$.isNumeric($(this).val()) || $(this).val() <= 0) { ok = false; } // if SD is not a number or is <= 0, set flag to false
-					break;
-				case 2: // check the N
+				case 1: // check the N
 					if ($.isNumeric($(this).val())) { // is N a number?
-						if ($(this).val() < 2) { ok = false; } // if N is less than 2, set flag to false
+						if ($(this).val() < 4) { ok = false; } // if N is less than 4, set flag to false
 						if (!(Math.round($(this).val()) === Number($(this).val()))) { ok = false; } // if N doesn't round to the same number as itself, set flag to false (N must be an integer)
 					} else { ok = false; } // if N is not a number, set flag to false
 					break;
@@ -140,35 +134,33 @@ function getData() {
 	maData.nullMean = Number($('#null').val()); // null hypothesis mean
 	maData.alpha = (100 - maData.ci) / 100; // alpha
 	maData.dataSet = new Array(); // an array to hold the dataset; each item in the array is an object with one study's data
-	var t_crit; // holds critical t value for each study (calculated via jStat)
-	var studyData = { mean:null, sd:null, n:null, se:null, variance:null, moe:null, weight:null, t:null, p:null }; // an object for study data
+	var studyData = { r:null, n:null, rZ:null, varZ:null, z:null, zLL:null, zUL:null, rLL:null, rUL:null, weight:null, p:null }; // an object for study data
 	// loop through the studies
 	$('#studies div').each(function(index) {
-		// get a study's M, SD, and N
+		// get a study's r and N
 		$(this).children('input').each(function(index) {
 			switch(index) {
 				case 0:
-					studyData.mean = Number($(this).val()); // Mean
+					studyData.r = Number($(this).val()); // r
 					break;
 				case 1:
-					studyData.sd = Number($(this).val()); // SD
-					break;
-				case 2:
 					studyData.n = Number($(this).val()); // N
 					break;
 				default:
 					break;
 			}
 		});
-		studyData.se = studyData.sd / Math.sqrt(studyData.n); // calculate standard error
-		studyData.variance = studyData.se * studyData.se; // calculate variance
-		t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.n-1); // calculate critical t value
-		studyData.moe = t_crit * studyData.se; // calculate margin of error
-		studyData.weight = 1 / studyData.variance; // calculate (fixed) study weight
-		studyData.t = (studyData.mean - maData.nullMean) / studyData.se; // calculate t value
-		studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.n-1))); // calculate p value
+		studyData.rZ = 0.5 * Math.log((1+studyData.r)/(1-studyData.r)); // z for r
+		studyData.varZ = 1 / (studyData.n - 3); // var of z
+		studyData.z = (studyData.rZ - maData.nullMean) / Math.sqrt(studyData.varZ); // z
+		studyData.zLL = studyData.rZ - jStat.normal.inv((0.5+maData.ci/200), 0, 1) * Math.sqrt(studyData.varZ); // z LL
+		studyData.zUL = studyData.rZ + jStat.normal.inv((0.5+maData.ci/200), 0, 1) * Math.sqrt(studyData.varZ); // z UL
+		studyData.rLL = (Math.exp(2*studyData.zLL)-1) / (Math.exp(2*studyData.zLL)+1); // r LL
+		studyData.rUL = (Math.exp(2*studyData.zUL)-1) / (Math.exp(2*studyData.zUL)+1); // r UL
+		studyData.weight = 1 / studyData.varZ; // weight
+		studyData.p = 2 * (1 - jStat.normal.cdf(Math.abs(studyData.z), 0, 1)); // p
 		// add the study's data to the data array
-		maData.dataSet[index] = { mean:studyData.mean, sd:studyData.sd, n:studyData.n, se:studyData.se, variance:studyData.variance, moe:studyData.moe, weight:studyData.weight, t:studyData.t, p:studyData.p, randomVariance:null, randomWeight:null };
+		maData.dataSet[index] = { r:studyData.r, n:studyData.n, rZ:studyData.rZ, varZ:studyData.varZ, z:studyData.z, zLL:studyData.zLL, zUL:studyData.zUL, rLL:studyData.rLL, rUL:studyData.rUL, weight:studyData.weight, p:studyData.p, randomVariance:null, randomWeight:null };
 	});
 	return maData;
 }
@@ -179,8 +171,8 @@ function getFixedWeightSums(dataset) {
     // for each study, add the weight measures, resulting in summed weights
     for (i = 0; i < dataset.length; i++) {
         fixedWeights.sumWeights += dataset[i].weight;
-        fixedWeights.sumWeightsTimesMeans += ( dataset[i].weight * dataset[i].mean );
-        fixedWeights.sumWeightsTimesSquaredMeans += ( dataset[i].weight * ( dataset[i].mean * dataset[i].mean ) );
+        fixedWeights.sumWeightsTimesMeans += ( dataset[i].weight * dataset[i].rZ );
+        fixedWeights.sumWeightsTimesSquaredMeans += ( dataset[i].weight * ( dataset[i].rZ * dataset[i].rZ ) );
         fixedWeights.sumSquaredWeights += ( dataset[i].weight * dataset[i].weight );
     }
     return fixedWeights;
@@ -214,7 +206,7 @@ function getHeterogeneity(weights, df, alpha) {
 function getRandomWeightSums(dataset) {
     var randomWeights = { sumWeightsTimesMeans:0, sumWeights:0 }; // object to hold weight values (initially zero)
     for (var i=0;i<dataset.length;i++) { // loop through each study
-        randomWeights.sumWeightsTimesMeans += dataset[i].randomWeight * dataset[i].mean; // add study's weight * mean
+        randomWeights.sumWeightsTimesMeans += dataset[i].randomWeight * dataset[i].rZ; // add study's weight * mean
         randomWeights.sumWeights += dataset[i].randomWeight; // add study's weight
     }
     return randomWeights; // pass back the data
@@ -223,13 +215,14 @@ function getRandomWeightSums(dataset) {
 // calculate meta-analysis, return as object of 8 values
 function metaAnalyse(weights, alpha, nullMean) {
 	var maData = {}; // create an object to hold the meta-analysis data
-	maData.mean = weights.sumWeightsTimesMeans / weights.sumWeights; // meta-analysed mean
-	maData.variance = 1 / weights.sumWeights; // variance of meta-analysed mean
-	maData.sd = Math.sqrt(maData.variance); // standard deviation of meta-analysed mean
-	maData.moe = jStat.normal.inv((1-(alpha/2)), 0, 1) * maData.sd; // margin of error of meta-analysed mean
-	maData.ll = maData.mean - maData.moe; // lower limit of 95% CI
-	maData.ul = maData.mean + maData.moe; // upper limit of 95% CI
-	maData.z = (maData.mean - nullMean) / maData.sd; // z value
+	maData.zMr = weights.sumWeightsTimesMeans / weights.sumWeights; // z for M of r
+	maData.Mr = (Math.exp(2*maData.zMr)-1) / (Math.exp(2*maData.zMr)+1); // M of r
+	maData.sem = Math.sqrt(1/weights.sumWeights); // standard error of mean
+	maData.zMOE = jStat.normal.inv((1-(alpha/2)), 0, 1) * maData.sem; // margin of error of z
+	maData.rMOE = (Math.exp(2*maData.zMOE)-1) / (Math.exp(2*maData.zMOE)+1); // margin of error of r
+	maData.ll = maData.Mr - maData.rMOE; // lower limit of 95% CI of meta-analysed r
+	maData.ul = maData.Mr + maData.rMOE; // upper limit of 95% CI of meta-analysed r
+	maData.z = (maData.zMr - nullMean) / maData.sem; // z value
 	maData.p = 2 * (1 - (jStat.normal.cdf(Math.abs(maData.z), 0, 1))); // p value
 	return maData; // pass the data back
 }
@@ -238,10 +231,11 @@ function metaAnalyse(weights, alpha, nullMean) {
 function displayModel(data, model) {
 	$('#display').append("<div>"
 		+ model + " EFFECTS MODEL<br />"
-		+ "Mean = " + data.mean.toFixed(2)
-		+ " SD = " + data.sd.toFixed(2)
-		+ " Var = " + data.variance.toFixed(2)
-		+ " MoE = " + data.moe.toFixed(2)
+		+ "zMr = " + data.zMr.toFixed(2)
+		+ " Mean r = " + data.Mr.toFixed(2)
+		+ " SEM = " + data.sem.toFixed(2)
+		+ " zMOE = " + data.zMOE.toFixed(2)
+		+ " rMOE = " + data.rMOE.toFixed(2)
 		+ " LL = " + data.ll.toFixed(2)
 		+ " UL = " + data.ul.toFixed(2)
 		+ " z = " + data.z.toFixed(2)
