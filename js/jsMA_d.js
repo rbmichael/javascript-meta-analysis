@@ -4,7 +4,7 @@ $(function() {
 	// set the 'add a study' button behaviour
 	$('#add').click(function() {
 		// add the html for a new study
-		$('#studies').append("<div>" + "Cohen\'s d: <input type=\"number\" value=\"\"></input>" + "N<sub>1</sub>: <input type=\"number\" value=\"\"></input>" + "N<sub>2</sub>: <input type=\"number\" value=\"\"></input><button class=\"remove\">remove</button><br /></div>");
+		$('#studies').append("<div>" + "Cohen\'s d: <input type=\"number\" value=\"\"></input>" + "N: <input type=\"number\" value=\"\"></input><button class=\"remove\">remove</button><br /></div>");
 		// add the remove button behaviour
 		$('#studies div:last .remove').click(function() {
 			if ($('#studies div').length > 2) { $(this).parent().detach(); } // if 3+ studies, remove the row
@@ -35,11 +35,8 @@ $(function() {
 						case 0: // insert Cohen's d
 							$(this).val(data[i][0]);
 							break;
-						case 1: // insert n group 1
+						case 1: // insert n
 							$(this).val(data[i][1]);
-							break;
-						case 2: // insert n group 2
-							$(this).val(data[i][2]);
 							break;
 						default:
 							break;
@@ -52,10 +49,10 @@ $(function() {
 	// set the 'run' button behaviour
 	$('#run').click(function() {
 		/* step 1: check data entry, proceed if OK, else return error
-			- must have 2+ studies, with each having d, n1, n2 (Ns >= 2)
+			- must have 2+ studies, with each having d and N >= 2
 		*/
 		var dataOK = checkData();
-		if (!dataOK) { alert("Error with data entry. Each study must have two groups with: d, N1, N2 (min N = 2)."); return; }
+		if (!dataOK) { alert("Error with data entry. Each study must have a Cohen's d and an N > 2."); return; }
 		
 		/* step 2: gather data for analysis */
 		var maData = getData(); // get form data and inferential stats for individual studies
@@ -93,9 +90,9 @@ $(function() {
 		$('#display').append("<div>" + "HETEROGENEITY INFORMATION (for unbiased d)<br />" + " Q = " + maData.heterogeneityDUnb.q.toFixed(2) + " C = " + maData.heterogeneityDUnb.c.toFixed(2) + " Tau<sup>2</sup> = " + maData.heterogeneityDUnb.tSq.toFixed(2) + " Tau = " + maData.heterogeneityDUnb.t.toFixed(2) + " I<sup>2</sup> = " + (maData.heterogeneityDUnb.iSq * 100).toFixed(2) + "%" + " B1 = " + maData.heterogeneityDUnb.b1.toFixed(2) + " B2 = " + maData.heterogeneityDUnb.b2.toFixed(2) + " L = " + maData.heterogeneityDUnb.l.toFixed(2) + " U = " + maData.heterogeneityDUnb.u.toFixed(2) + " LL Tau<sup>2</sup> = " + maData.heterogeneityDUnb.lltSq.toFixed(2) + " UL Tau<sup>2</sup> = " + maData.heterogeneityDUnb.ultSq.toFixed(2) + " LL Tau = " + maData.heterogeneityDUnb.llt.toFixed(2) + " UL Tau = " + maData.heterogeneityDUnb.ult.toFixed(2) + " p = " + maData.heterogeneityDUnb.p.toFixed(3) + "</div>");
 		
 		/* step 5: output data to csv in an <a> */
-		var csv = "INDIVIDUAL STUDIES\nStudy ID,d,Unbiased d,N 1,N 2,dLL,dUL,d Study Weight (fixed),Unbiased d Study Weight (fixed),t value,p value\n";
+		var csv = "INDIVIDUAL STUDIES\nStudy ID,d,Unbiased d,N,dLL,dUL,d Study Weight (fixed),Unbiased d Study Weight (fixed),t value,p value\n";
 		for (var i = 0; i < maData.dataSet.length; i++) {
-			csv += String(i+1) + "," + maData.dataSet[i].d + "," + maData.dataSet[i].dUnb + "," + maData.dataSet[i].n1 + "," + maData.dataSet[i].n2 + "," + maData.dataSet[i].dLL + "," + maData.dataSet[i].dUL + "," + maData.dataSet[i].dWeight + "," + maData.dataSet[i].dUnbWeight + "," + maData.dataSet[i].t + "," + maData.dataSet[i].p + "\n";
+			csv += String(i+1) + "," + maData.dataSet[i].d + "," + maData.dataSet[i].dUnb + "," + maData.dataSet[i].n + "," + maData.dataSet[i].dLL + "," + maData.dataSet[i].dUL + "," + maData.dataSet[i].dWeight + "," + maData.dataSet[i].dUnbWeight + "," + maData.dataSet[i].t + "," + maData.dataSet[i].p + "\n";
 		}
 		csv += "\nFIXED EFFECTS MODEL (d)\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixedD.mean + "," + maData.fixedD.sd + "," + maData.fixedD.variance + "," + maData.fixedD.moe + "," + maData.fixedD.ll + "," + maData.fixedD.ul + "," + maData.fixedD.z + "," + maData.fixedD.p + "\n";
 		csv += "\nFIXED EFFECTS MODEL (unbiased d)\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixedDUnb.mean + "," + maData.fixedDUnb.sd + "," + maData.fixedDUnb.variance + "," + maData.fixedDUnb.moe + "," + maData.fixedDUnb.ll + "," + maData.fixedDUnb.ul + "," + maData.fixedDUnb.z + "," + maData.fixedDUnb.p + "\n";
@@ -106,6 +103,7 @@ $(function() {
 		$('#display').append("<a id=\"download\">DOWNLOAD CSV</a>");
 		$('#download').attr("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
 		$('#download').attr("download", "myMetaAnalysis.csv");
+
 	});
 
 	// add the initial 2 study rows
@@ -117,7 +115,7 @@ $(function() {
 
 });
 
-// data entry check: minimum 2 studies, each with d, n1, n2
+// data entry check: minimum 2 studies, each with d, n>2
 function checkData() {
 	var ok = true; // boolean to return
 	if ($('#studies div').length < 2) { ok = false; return ok; } // if fewer than 2 studies, stop (should never happen)
@@ -128,13 +126,7 @@ function checkData() {
 				case 0: // check Cohen's d
 					if (!$.isNumeric($(this).val())) { ok = false; } // if d is not a number, set flag to false
 					break;
-				case 1: // check the group 1 N
-					if ($.isNumeric($(this).val())) { // is N a number?
-						if ($(this).val() < 2) { ok = false; } // if N is less than 2, set flag to false
-						if (!(Math.round($(this).val()) === Number($(this).val()))) { ok = false; } // if N doesn't round to the same number as itself, set flag to false (N must be an integer)
-					} else { ok = false; } // if N is not a number, set flag to false
-					break;
-				case 2: // check the group 2 N
+				case 1: // check the N
 					if ($.isNumeric($(this).val())) { // is N a number?
 						if ($(this).val() < 2) { ok = false; } // if N is less than 2, set flag to false
 						if (!(Math.round($(this).val()) === Number($(this).val()))) { ok = false; } // if N doesn't round to the same number as itself, set flag to false (N must be an integer)
@@ -159,49 +151,46 @@ function getData() {
 	maData.dataSet = new Array(); // an array to hold the dataset; each item in the array is an object with one study's data
 	var t_crit; // holds critical t value for each study (calculated via jStat)
 	var targetP = maData.alpha / 2; // target p to converge on for calculating CIs on d
-	var studyData = { d:null, n1:null, n2:null, dMod:null, dUnb:null, dVar:null, dUnbVar:null, df:null, ncp:null, sqrtN12:null, ncpL:null, ncpU:null, dLL:null, dUL:null, dMoeL:null, dMoeU:null, dUnbMoeL:null, dUnbMoeU:null, dWeight:null, dUnbWeight:null, t:null, p:null }; // an object for study data
+	var studyData = { d:null, n:null, dMod:null, dUnb:null, dVar:null, dUnbVar:null, df:null, ncp:null, sqrtN:null, ncpL:null, ncpU:null, dLL:null, dUL:null, dMoeL:null, dMoeU:null, dUnbMoeL:null, dUnbMoeU:null, dWeight:null, dUnbWeight:null, t:null, p:null }; // an object for study data
 	// loop through the studies
 	$('#studies div').each(function(index) {
-		// get each group's Cohen's d, N1, and N2
+		// get each group's Cohen's d and N
 		$(this).children('input').each(function(index) {
 			switch(index) {
 				case 0:
 					studyData.d = Number($(this).val()); // Cohen's d
 					break;
 				case 1:
-					studyData.n1 = Number($(this).val()); // Group 1 N
-					break;
-				case 2:
-					studyData.n2 = Number($(this).val()); // Group 2 N
+					studyData.n = Number($(this).val()); // N
 					break;
 				default:
 					break;
 			}
 		});
-		studyData.sqrtN12 = Math.sqrt(1/studyData.n1 + 1/studyData.n2); // square root of (1/N1 + 1/N2)
-		studyData.ncp = studyData.d / studyData.sqrtN12; // non-central parameter
-		studyData.df = studyData.n1 + studyData.n2 - 2; // study's degrees of freedom
+		studyData.sqrtN = Math.sqrt(1/studyData.n); // square root of (1/N)
+		studyData.ncp = studyData.d / studyData.sqrtN; // non-central parameter
+		studyData.df = studyData.n - 1; // study's degrees of freedom
 		t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.df); // critical t
 		studyData.ncpL = studyData.ncp - t_crit; // first guess for ncpL
 		studyData.ncpU = studyData.ncp + t_crit; // first guess for ncpU
 		studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1-targetP), Tol: 0.0000000001 }); // use goalSeek to find better ncpL
 		studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: targetP, Tol: 0.0000000001 }); // use goalSeek to find better ncpU
-		studyData.dLL = studyData.ncpL * studyData.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
-		studyData.dUL = studyData.ncpU * studyData.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
+		studyData.dLL = studyData.ncpL * studyData.sqrtN; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
+		studyData.dUL = studyData.ncpU * studyData.sqrtN; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
 		studyData.dMod = Math.exp(jStat.gammaln(studyData.df/2)) / (Math.sqrt(studyData.df/2) * Math.exp(jStat.gammaln((studyData.df/2)-0.5))); // modifier for unbiased d
 		studyData.dUnb = studyData.d * studyData.dMod; // unbiased d
 		studyData.dMoeL = studyData.d - studyData.dLL; // lower margin of error for d
 		studyData.dMoeU = studyData.dUL - studyData.d; // upper margin of error for d
 		studyData.dUnbMoeL = studyData.dUnb - studyData.dLL; // lower margin of error for unbiased d
 		studyData.dUnbMoeU = studyData.dUL - studyData.dUnb; // upper margin of error for unbiased d
-		studyData.dVar = (studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2 * (studyData.n1+studyData.n2)); // calculate d variance
+		studyData.dVar = (1+(studyData.d*studyData.d)/2) / studyData.n; // calculate d variance
 		studyData.dWeight = 1 / studyData.dVar; // calculate study weight when using d
-		studyData.dUnbVar = studyData.dMod * studyData.dMod * ((studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2 * (studyData.n1+studyData.n2))); // calculate unbiased d variance
+		studyData.dUnbVar = studyData.dMod * studyData.dMod * (1+(studyData.d*studyData.d)/2) / studyData.n;// calculate unbiased d variance
 		studyData.dUnbWeight = 1 / studyData.dUnbVar; // calculate study weight when using unbiased d
-		studyData.t = (studyData.dUnb - maData.nullMean) / Math.sqrt((studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2*(studyData.n1+studyData.n2))); // calculate t
-		studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), (studyData.n1+studyData.n2-2)))); // calculate p value
+		studyData.t = (studyData.dUnb - maData.nullMean) / Math.sqrt(studyData.dUnbVar); // calculate t
+		studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
 		// add the study's data to the data array
-		maData.dataSet[index] = { d:studyData.d, n1:studyData.n1, n2:studyData.n2, dMod:studyData.dMod, dUnb:studyData.dUnb, dVar:studyData.dVar, dUnbVar:studyData.dUnbVar, df:studyData.df, ncp:studyData.ncp, sqrtN12:studyData.sqrtN12, ncpL:studyData.ncpL, ncpU:studyData.ncpU, dLL:studyData.dLL, dUL:studyData.dUL, dMoeL:studyData.dMoeL, dMoeU:studyData.dMoeU, dUnbMoeL:studyData.dUnbMoeL, dUnbMoeU:studyData.dUnbMoeU, dWeight:studyData.dWeight, dUnbWeight:studyData.dUnbWeight, t:studyData.t, p:studyData.p, randomVarianceD:null, randomWeightD:null, randomVarianceDUnb:null, randomWeightDUnb:null };
+		maData.dataSet[index] = { d:studyData.d, n:studyData.n, dMod:studyData.dMod, dUnb:studyData.dUnb, dVar:studyData.dVar, dUnbVar:studyData.dUnbVar, df:studyData.df, ncp:studyData.ncp, sqrtN:studyData.sqrtN, ncpL:studyData.ncpL, ncpU:studyData.ncpU, dLL:studyData.dLL, dUL:studyData.dUL, dMoeL:studyData.dMoeL, dMoeU:studyData.dMoeU, dUnbMoeL:studyData.dUnbMoeL, dUnbMoeU:studyData.dUnbMoeU, dWeight:studyData.dWeight, dUnbWeight:studyData.dUnbWeight, t:studyData.t, p:studyData.p, randomVarianceD:null, randomWeightD:null, randomVarianceDUnb:null, randomWeightDUnb:null };
 	});
 	return maData;
 }

@@ -90,7 +90,7 @@ $(function() {
 		// then display the heterogeneity information
 		$('#display').append("<div>" + "HETEROGENEITY INFORMATION<br />" + " Q = " + maData.heterogeneity.q.toFixed(2) + " C = " + maData.heterogeneity.c.toFixed(2) + " Tau<sup>2</sup> = " + maData.heterogeneity.tSq.toFixed(2) + " Tau = " + maData.heterogeneity.t.toFixed(2) + " I<sup>2</sup> = " + (maData.heterogeneity.iSq * 100).toFixed(2) + "%" + " B1 = " + maData.heterogeneity.b1.toFixed(2) + " B2 = " + maData.heterogeneity.b2.toFixed(2) + " L = " + maData.heterogeneity.l.toFixed(2) + " U = " + maData.heterogeneity.u.toFixed(2) + " LL Tau<sup>2</sup> = " + maData.heterogeneity.lltSq.toFixed(2) + " UL Tau<sup>2</sup> = " + maData.heterogeneity.ultSq.toFixed(2) + " LL Tau = " + maData.heterogeneity.llt.toFixed(2) + " UL Tau = " + maData.heterogeneity.ult.toFixed(2) + " p = " + maData.heterogeneity.p.toFixed(3) + "</div>");
 		
-		/* step 5: output data to csv in a <textarea> */
+		/* step 5: output data to csv in an <a> */
 		var csv = "INDIVIDUAL STUDIES\nStudy ID,Mean 1,Standard Deviation 1,N 1,Mean 2,Standard Deviation 2,N 2,Mean Difference,Pooled Standard Deviation,Variance of Difference,Margin of Error of Difference,Study Weight (fixed),t value,p value\n";
 		for (var i = 0; i < maData.dataSet.length; i++) {
 			csv += String(i+1) + "," + maData.dataSet[i].m1 + "," + maData.dataSet[i].sd1 + "," + maData.dataSet[i].n1 + "," + maData.dataSet[i].m2 + "," + maData.dataSet[i].sd2 + "," + maData.dataSet[i].n2 + "," + maData.dataSet[i].mDiff + "," + maData.dataSet[i].pooledSD + "," + maData.dataSet[i].varDiff + "," + maData.dataSet[i].moeDiff + "," + maData.dataSet[i].weight + "," + maData.dataSet[i].t + "," + maData.dataSet[i].p + "\n";
@@ -98,9 +98,9 @@ $(function() {
 		csv += "\nFIXED EFFECTS MODEL\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.fixed.mean + "," + maData.fixed.sd + "," + maData.fixed.variance + "," + maData.fixed.moe + "," + maData.fixed.ll + "," + maData.fixed.ul + "," + maData.fixed.z + "," + maData.fixed.p + "\n";
 		csv += "\nRANDOM EFFECTS MODEL\nMean,Standard Deviation,Variance,Margin of Error,Lower Limit CI,Upper Limit CI,z value,p value\n" + maData.random.mean + "," + maData.random.sd + "," + maData.random.variance + "," + maData.random.moe + "," + maData.random.ll + "," + maData.random.ul + "," + maData.random.z + "," + maData.random.p + "\n";
 		csv += "\nHETEROGENEITY INFORMATION\nQ,C,Tau squared,Tau,I squared,B1,B2,L,U,Lower Limit CI Tau squared,Upper Limit CI Tau squared,Lower Limit CI Tau,Upper Limit CI Tau,p value\n" + maData.heterogeneity.q + "," + maData.heterogeneity.c + "," + maData.heterogeneity.tSq + "," + maData.heterogeneity.t + "," + maData.heterogeneity.iSq + "," + maData.heterogeneity.b1 + "," + maData.heterogeneity.b2 + "," + maData.heterogeneity.l + "," + maData.heterogeneity.u + "," + maData.heterogeneity.lltSq + "," + maData.heterogeneity.ultSq + "," + maData.heterogeneity.llt + "," + maData.heterogeneity.ult + "," + maData.heterogeneity.p + "\n";
-		$('#display').append("<p>Copy the text below to save as .csv</p><textarea>" + csv + "</textarea>");
-		$('#display textarea').width($(document).width()-50);
-		$('#display textarea').height(200);
+		$('#display').append("<a id=\"download\">DOWNLOAD CSV</a>");
+		$('#download').attr("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
+		$('#download').attr("download", "myMetaAnalysis.csv");
 	});
 
 	// add the initial 2 study rows
