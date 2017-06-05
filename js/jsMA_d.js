@@ -281,8 +281,8 @@ function getRandomWeightSums(dataset, dType) {
 		}
     } else if (dType === "dUnb") {
 		for (var i=0;i<dataset.length;i++) { // loop through each study
-			randomWeights.sumWeightsTimesMeans += dataset[i].randomWeightD * dataset[i].dUnb; // add study's weight * mean difference
-			randomWeights.sumWeights += dataset[i].randomWeightD; // add study's weight
+			randomWeights.sumWeightsTimesMeans += dataset[i].randomWeightDUnb * dataset[i].dUnb; // add study's weight * mean difference
+			randomWeights.sumWeights += dataset[i].randomWeightDUnb; // add study's weight
 		}
     } else { alert("Error."); }
     return randomWeights; // pass back the data

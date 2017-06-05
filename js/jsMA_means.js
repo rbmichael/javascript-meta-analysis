@@ -74,7 +74,7 @@ $(function() {
 		/* step 4: display meta-analysis results */
 		$('#display *').detach(); // first clear the display
 		for (var i = 0; i < maData.dataSet.length; i++) { // then loop through each study and display its data
-			$('#display').append("<div>" + "Study #" + (i+1) + " Mean = " + maData.dataSet[i].mean.toFixed(2) + " SD = " + maData.dataSet[i].sd.toFixed(2) + " N = " + maData.dataSet[i].n.toFixed(0) + " SE = " + maData.dataSet[i].se.toFixed(2) + " Var = " + maData.dataSet[i].variance.toFixed(2) + " MoE = " + maData.dataSet[i].moe.toFixed(2) + " Weight = " + maData.dataSet[i].weight.toFixed(2) + " t = " + maData.dataSet[i].t.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
+			$('#display').append("<div>" + "Study #" + (i+1) + " Mean = " + maData.dataSet[i].mean.toFixed(2) + " SD = " + maData.dataSet[i].sd.toFixed(2) + " N = " + maData.dataSet[i].n.toFixed(0) + " SE = " + maData.dataSet[i].se.toFixed(2) + " Var = " + maData.dataSet[i].variance.toFixed(2) + " MoE = " + maData.dataSet[i].moe.toFixed(2) + " Fixed Weight = " + ((maData.dataSet[i].weight*100)/maData.fixedWeights.sumWeights).toFixed(2) + "% Random weight = " + ((maData.dataSet[i].randomWeight*100)/maData.randomWeights.sumWeights).toFixed(2) + "% t = " + maData.dataSet[i].t.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
 		}
 		displayModel(maData.fixed, "FIXED"); // then display the fixed model
 		displayModel(maData.random, "RANDOM"); // then display the random model

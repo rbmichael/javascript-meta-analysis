@@ -71,7 +71,7 @@ $(function() {
 		/* step 4: display meta-analysis results */
 		$('#display *').detach(); // first clear the display
 		for (var i = 0; i < maData.dataSet.length; i++) { // then loop through each study and display its data
-			$('#display').append("<div>" + "Study #" + (i+1) + " r = " + maData.dataSet[i].r.toFixed(2) + " N = " + maData.dataSet[i].n.toFixed(0) + " rZ = " + maData.dataSet[i].rZ.toFixed(2) + " varZ = " + maData.dataSet[i].varZ.toFixed(2) + " zLL = " + maData.dataSet[i].zLL.toFixed(2) + " zUL = " + maData.dataSet[i].zUL.toFixed(2) + " rLL = " + maData.dataSet[i].rLL.toFixed(2) + " rUL = " + maData.dataSet[i].rUL.toFixed(2) + " Weight = " + maData.dataSet[i].weight.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
+			$('#display').append("<div>" + "Study #" + (i+1) + " r = " + maData.dataSet[i].r.toFixed(2) + " N = " + maData.dataSet[i].n.toFixed(0) + " rZ = " + maData.dataSet[i].rZ.toFixed(2) + " varZ = " + maData.dataSet[i].varZ.toFixed(2) + " zLL = " + maData.dataSet[i].zLL.toFixed(2) + " zUL = " + maData.dataSet[i].zUL.toFixed(2) + " rLL = " + maData.dataSet[i].rLL.toFixed(2) + " rUL = " + maData.dataSet[i].rUL.toFixed(2) + " Weight = " + maData.dataSet[i].weight.toFixed(2) + " z = " + maData.dataSet[i].z.toFixed(2) + " p = " + maData.dataSet[i].p.toFixed(3) + "</div>");
 		}
 		displayModel(maData.fixed, "FIXED"); // then display the fixed model
 		displayModel(maData.random, "RANDOM"); // then display the random model
@@ -231,13 +231,13 @@ function metaAnalyse(weights, alpha, nullMean) {
 function displayModel(data, model) {
 	$('#display').append("<div>"
 		+ model + " EFFECTS MODEL<br />"
-		+ "zMr = " + data.zMr.toFixed(2)
-		+ " Mean r = " + data.Mr.toFixed(2)
+		+ "Mean r = " + data.Mr.toFixed(2)
 		+ " SEM = " + data.sem.toFixed(2)
 		+ " zMOE = " + data.zMOE.toFixed(2)
 		+ " rMOE = " + data.rMOE.toFixed(2)
 		+ " LL = " + data.ll.toFixed(2)
 		+ " UL = " + data.ul.toFixed(2)
+		+ " zMr = " + data.zMr.toFixed(2)
 		+ " z = " + data.z.toFixed(2)
 		+ " p = " + data.p.toFixed(3)
 		+ "</div>"
