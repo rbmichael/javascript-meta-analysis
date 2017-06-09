@@ -1,154 +1,241 @@
 // run when document is fully loaded
 $(function() {
 
- 	// build an array of the types of meta-analysis available
- 	var maTypesArray = [];
-	maTypesArray[0] = { name:"means", description:"Single means", dataFields:["M","SD","N"] };
-	maTypesArray[1] = { name:"meanDiffs", description: "Difference between two independent group means", dataFields:["M1","SD1","N1","M2","SD2","N2"] };
-	maTypesArray[2] = { name:"meanPairedDiffs", description: "Difference between two dependent means", dataFields:["M1","SD1","M2","SD2","N"] };
-	maTypesArray[3] = { name:"d", description:"Cohen's d for a single group", dataFields:["d","N"] };
-	maTypesArray[4] = { name:"dDiffs", description:"Cohen's d between two independent groups", dataFields:["d","N1","N2"] };
-	maTypesArray[5] = { name:"r", description:"Pearson's r correlations", dataFields:["r","N"] };
+	var maTypesArray = [], // array to hold the types of meta-analysis available
+		currentMAType = 0, // current meta-analysis type; defaults to Single means meta-analysis
+		i = 0, // counter
+		j = 0; // another counter
 	
-	var currentMAType = 0; // default to Single means meta-analysis
-	
-	// populate the meta-analysis <select> element, for choosing a type of meta-analysis
-	for (var i=0; i<maTypesArray.length; i++) {
-		if (i === currentMAType) { $('#maSelector').append("<option value=\"" + i + "\" selected>" + maTypesArray[i].description + "</option>"); }
-		else { $('#maSelector').append("<option value=\"" + i + "\">" + maTypesArray[i].description + "</option>"); }
+ 	// build an array of objects of the types of meta-analysis available
+ 	maTypesArray.push({ name:"means", description:"Single means", dataFields:["M","SD","N"] });
+	maTypesArray.push({ name:"meanDiffs", description: "Difference between two independent group means", dataFields:["M1","SD1","N1","M2","SD2","N2"] });
+	maTypesArray.push({ name:"meanPairedDiffs", description: "Difference between two dependent means", dataFields:["M1","SD1","M2","SD2","N"] });
+	maTypesArray.push({ name:"d", description:"Cohen's d for a single group", dataFields:["d","N"] });
+	maTypesArray.push({ name:"dDiffs", description:"Cohen's d between two independent groups", dataFields:["d","N1","N2"] });
+	maTypesArray.push({ name:"r", description:"Pearson's r correlations", dataFields:["r","N"] });
+
+	// populate the meta-analysis <select> element (for choosing a type of meta-analysis) from maTypesArray
+	for (i = 0; i < maTypesArray.length; i++) {
+		$('#maSelector').append("<option value=\"" + i + "\"" + ((i === currentMAType) ? "selected" : "") + ">" + maTypesArray[i].description + "</option>");
 	}
 
 	// set the meta-analysis type selector's change behaviour (remove studies and setup new form fields)
 	$('#maSelector').change(function() {
+
 		currentMAType = parseInt(this.value); // change current MA type to the selected option
+		if (maTypesArray[currentMAType].name === "d" || maTypesArray[currentMAType].name === "dDiffs") { // show/hide he dUnbiased checkbox as necessary
+			$('#dUnbiased').show();
+		} else {
+			$('#dUnbiased').hide();
+		}
 		$('#removeAll').click(); // remove everything and setup new form fields
+
 	});
 
 	// set the 'add a study' button behaviour
 	$('#add').click(function() {
-		var fields = maTypesArray[currentMAType].dataFields; // get the form fields
-		var html = ""; // variable to hold the html for the study row
-		// add the html for a new study
-		$('#studies').append("<div></div>"); // container
-		for (var i=0; i<fields.length; i++) { html += fields[i] + "<input type=\"number\" value=\"\"></input>"; } // form fields
+
+		var fields = maTypesArray[currentMAType].dataFields, // get the form fields
+			html = "", // to hold the html for the study row
+			i = 0; // counter
+
+		$('#studies').append("<div></div>"); // add the html for a new study
+		for (i = 0; i < fields.length; i++) { html += fields[i] + "<input type=\"number\"></input>"; } // form fields
 		html += "<button class=\"remove\">remove</button>"; // remove study button
-		$('#studies div:last').html(html); // update the container html
-		// add the remove button behaviour
-		$('#studies div:last .remove').click(function() {
+		$('#studies div:last').append(html); // update the container html
+		$('#studies div:last .remove').click(function() { // add the remove button behaviour
 			if ($('#studies div').length > 2) { $(this).parent().detach(); } // if 3+ studies, remove the row
 			else { alert("At least 2 studies are required."); } // otherwise display a message
 		});
+
 	});
 
 	// set the 'remove all studies' button behaviour
 	$('#removeAll').click(function() {
+
 		$('#display *').detach(); // clear the display
 		$('#studies *').detach(); // remove all studies
 		$('#add').click(); $('#add').click(); // add the 2 minimum study rows
+
 	});
 	
 	// set the csv import button behaviour 
 	$('#updateCSV').click(function() {
-		var csv = $('#csv').val(); // get the textarea input
-		var rows = csv.split('\n'); // split it into rows based on newline character
-		var data = []; // create an array to hold the data arrays
-		for (var i = 0; i < rows.length; i++) { data[i] = rows[i].split(','); } // create an array of values from each row of data
+
+		var csv = $('#csv').val(), // get the textarea input
+			rows = csv.split('\n'), // split it into rows based on newline character
+			data = [], // an array to hold the data arrays
+			i = 0; // counter
+
+		for (i = 0; i < rows.length; i++) { data[i] = rows[i].split(','); } // create an array of values from each row of data
 		if (rows.length > 1) { // if there's a minimum of 2 studies, populate the form
 			$('#studies *').detach(); // first remove all studies
-			// loop through data array adding study rows
-			for (var i = 0; i < data.length; i++) {
+			for (i = 0; i < data.length; i++) { // loop through data array adding study rows
 				$('#add').click(); // add a row
 				$('#studies div:last input').each(function(index) { // populate each input field with data
 					$(this).val(data[i][index]);
 				});
 			}
-		} else { alert("Minimum of 2 studies (i.e., 2 csv rows) required."); return; } // if < 2 studies, send an error
+		} else {  // if < 2 studies, send an error
+			alert("Minimum of 2 studies (i.e., 2 csv rows) required.");
+		}
+
 	});
 	
 	// set the 'run' button behaviour
 	$('#run').click(function() {
-		// step 1: check data entry, proceed if OK, else return error
-		if (!checkFormData()) { alert("Error with data entry; check valid numbers have been entered."); return; }
-		
+
+		var maData = {}, // main meta-analysis data object
+			i = 0, // counter
+			j = 0, // counter
+			csv = ""; // for holding meta-analysis as csv
+
+		/* ---------- */
+		/* step 1: check data entry, proceed if OK, else show an error and stop */
+		/* ---------- */
+		if (!checkFormData()) {
+			alert("Error with data entry; check valid numbers have been entered.");
+			return;
+		}
+
+		/* ---------- */
 		/* step 2: gather data for analysis */
-		var maData = getData(maTypesArray[currentMAType]); // get form data and inferential stats for individual studies
-		//BOOKMARK: Cohen's d variants will need to run twice, once for d, once for unbiased d
+		/* ---------- */
+		maData = getData(maTypesArray[currentMAType]); // get form data and inferential stats for individual studies
 		maData.fixedWeights = getFixedWeightSums(maData.dataSet); // get fixed weights
 		maData.heterogeneity = getHeterogeneity(maData.fixedWeights, maData.df, maData.alpha); // get heterogeneity measures
-		for (var i = 0; i < maData.dataSet.length; i++) { // for each study in the dataset, add in its random model variance and weight
+		for (i = 0; i < maData.dataSet.length; i++) { // for each study in the dataset, add in its random model variance and weight
 			maData.dataSet[i].randomVariance = (1 / maData.dataSet[i].weight) + maData.heterogeneity.tSq; // random model variance
 			maData.dataSet[i].randomWeight = 1 / maData.dataSet[i].randomVariance; // random model weight
 		}
 		maData.randomWeights = getRandomWeightSums(maData.dataSet); // get random weights
-		
+
+		/* ---------- */
 		/* step 3: meta-analysis calculations */
+		/* ---------- */
 		maData.fixed = metaAnalyse(maData.fixedWeights, maData.alpha, maData.nullMean, maTypesArray[currentMAType]); // run the fixed model meta-analysis
 		maData.random = metaAnalyse(maData.randomWeights, maData.alpha, maData.nullMean, maTypesArray[currentMAType]); // run the random model meta-analysis
-		
+
+		/* ---------- */
 		/* step 4: display meta-analysis results */
+		/* ---------- */
 		$('#display *').detach(); // first clear the display
-		for (var i=0; i<maData.dataSet.length; i++) { // loop through individual studies and display data
-			$('#display').append("<div>Study " + (i+1) + "</div>");
-			for (var j in maData.dataSet[i]) { $('#display div:last').append(" " + j + " = " + maData.dataSet[i][j].toFixed(3)); }
+		for (i = 0; i < maData.dataSet.length; i++) { // loop through individual studies and display data
+			$('#display').append("<div>Study " + (i + 1) + "</div>");
+			for (j in maData.dataSet[i]) {
+				$('#display div:last').append(" " + j + " = " + maData.dataSet[i][j].toFixed(3));
+			}
 		}
-		$('#display').append("<div>FIXED EFFECTS MODEL<br></div>"); for (var i in maData.fixed) { $('#display div:last').append(i + " = " + maData.fixed[i].toFixed(3) + " "); }
-		$('#display').append("<div>RANDOM EFFECTS MODEL<br></div>"); for (var i in maData.random) { $('#display div:last').append(i + " = " + maData.random[i].toFixed(3) + " "); }
-		$('#display').append("<div>HETEROGENEITY INFORMATION<br></div>"); for (var i in maData.heterogeneity) { $('#display div:last').append(i + " = " + maData.heterogeneity[i].toFixed(3) + "<br>"); }
-		
+		$('#display').append("<div>FIXED EFFECTS MODEL<br></div>");
+		for (i in maData.fixed) {
+			$('#display div:last').append(i + " = " + maData.fixed[i].toFixed(3) + " ");
+		}
+		$('#display').append("<div>RANDOM EFFECTS MODEL<br></div>");
+		for (i in maData.random) {
+			$('#display div:last').append(i + " = " + maData.random[i].toFixed(3) + " ");
+		}
+		$('#display').append("<div>HETEROGENEITY INFORMATION<br></div>");
+		for (i in maData.heterogeneity) {
+			$('#display div:last').append(i + " = " + maData.heterogeneity[i].toFixed(3) + "<br>");
+		}
+
+		/* ---------- */
 		/* step 5: output data to csv in an <a> */
-		var csv = "INDIVIDUAL STUDIES\n";
-		for (var i in maData.dataSet[0]) { csv += i + ","; } csv += "\n";
-		for (var i=0; i<maData.dataSet.length; i++) { for (var j in maData.dataSet[i]) { csv += maData.dataSet[i][j] + ","; } csv += "\n"; }
+		/* ---------- */
+		csv = "INDIVIDUAL STUDIES\n";
+		for (i in maData.dataSet[0]) {
+			csv += i + ",";
+		}
+		csv += "\n";
+		for (i = 0; i < maData.dataSet.length; i++) {
+			for (j in maData.dataSet[i]) {
+				csv += maData.dataSet[i][j] + ",";
+			}
+			csv += "\n";
+		}
 		csv += "FIXED EFFECTS MODEL\n";
-		for (var i in maData.fixed) { csv += i + ","; } csv += "\n"; for (var i in maData.fixed) { csv += maData.fixed[i] + ","; }
+		for (i in maData.fixed) {
+			csv += i + ",";
+		}
+		csv += "\n";
+		for (i in maData.fixed) {
+			csv += maData.fixed[i] + ",";
+		}
 		csv += "\nRANDOM EFFECTS MODEL\n";
-		for (var i in maData.random) { csv += i + ","; } csv += "\n"; for (var i in maData.random) { csv += maData.random[i] + ","; }
-		csv += "\nHETEROGENEITY INFORMATION\n"; for (var i in maData.heterogeneity) { csv += i + ","; } csv += "\n"; for (var i in maData.heterogeneity) { csv += maData.heterogeneity[i] + ","; }
+		for (i in maData.random) {
+			csv += i + ",";
+		}
+		csv += "\n";
+		for (i in maData.random) {
+			csv += maData.random[i] + ",";
+		}
+		csv += "\nHETEROGENEITY INFORMATION\n";
+		for (i in maData.heterogeneity) {
+			csv += i + ",";
+		}
+		csv += "\n";
+		for (i in maData.heterogeneity) {
+			csv += maData.heterogeneity[i] + ",";
+		}
 		$('#display').append("<a id=\"download\">DOWNLOAD CSV</a>");
 		$('#download').attr("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
 		$('#download').attr("download", "myMetaAnalysis.csv");
+
 	});
 
+	// hide the dUnbiased checkbox
+	$('#dUnbiased').hide();
+	
 	// add the initial 2 study rows
-	$('#add').click(); $('#add').click();
+	$('#add').click();
+	$('#add').click();
 
 	// enable the 'run' button
 	$('#run').prop('disabled', false);
+
 });
 
-// data entry check
+// data entry check -- needs extending, barebones right now
 function checkFormData() {
-	var ok = true; // boolean to return
-	if ($('#studies div').length < 2) { ok = false; return ok; } // if fewer than 2 studies, set flag to false and return
-	$('#studies div').each(function(index) { // loop through the studies
-		$(this).children('input').each(function(index) { // for each study's input data
-			if (!$.isNumeric($(this).val())) { ok = false; } // if it's not a number, set flag to false
-		});
+
+	var ok = true; // boolean
+	
+	if ($('#studies div').length < 2) { // if fewer than 2 studies, return false
+		ok = false;
+	}
+	$('#studies div input').each(function() { // loop through all the inputs
+		if (!$.isNumeric($(this).val())) { // if any are not a number, return false
+			ok = false;
+		}
 	});
-	return ok; // pass back value
+	
+	return ok; // passed the checks, return true
+
 }
 
 // gather form data, calculate inferential stats for individual studies, and return these data in an object
 function getData(maType) {
-	var maData = {}; // object to hold meta-analysis data
-	var studyData = {}; // an object for individual study data
+
+	var maData = {}, // an object to hold ALL the meta-analysis data
+		studyData = {}; // an object for individual study data
+
 	maData.k = $('#studies div').length; // number of studies
 	maData.df = maData.k - 1; // degrees of freedom
 	maData.ci = Number($('#ci').val()); // level of confidence
 	maData.nullMean = Number($('#null').val()); // null hypothesis mean
 	maData.alpha = (100 - maData.ci) / 100; // alpha
 	maData.dataSet = []; // an array to hold the dataset; each item in the array is an object with one study's data
+
 	$('#studies div').each(function(i) { // loop through each study
 		$(this).children('input').each(function(j) { // loop through the entered data
 			studyData[maType.dataFields[j].toLowerCase()] = Number($(this).val()); // store the input
 		});
-		// get the appropriate statistics depending on the type of meta-analysis
-		switch (maType.name) {
+		switch (maType.name) { // get the appropriate statistics depending on the type of meta-analysis
 			case "means":
-				studyData.df = studyData.n-1; // degrees of freedom
+				studyData.df = studyData.n - 1; // degrees of freedom
 				studyData.se = studyData.sd / Math.sqrt(studyData.n); // calculate standard error
 				studyData.variance = studyData.se * studyData.se; // calculate variance
-				studyData.t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.df); // calculate critical t value
+				studyData.t_crit = jStat.studentt.inv((1 - (maData.alpha / 2)), studyData.df); // calculate critical t value
 				studyData.moe = studyData.t_crit * studyData.se; // calculate margin of error
 				studyData.weight = 1 / studyData.variance; // calculate (fixed) study weight
 				studyData.t = (studyData.m - maData.nullMean) / studyData.se; // calculate t value
@@ -157,10 +244,10 @@ function getData(maType) {
 				break;
 			case "meanDiffs":
 				studyData.mDiff = studyData.m2 - studyData.m1; // calculate mean difference
-				studyData.df = studyData.n1+studyData.n2-2; // degrees of freedom
-				studyData.pooledSD = Math.sqrt(((studyData.n1-1)*Math.pow(studyData.sd1,2) + (studyData.n2-1)*Math.pow(studyData.sd2,2)) / studyData.df); // calculate pooled standard deviation
-				studyData.varDiff = Math.pow(studyData.pooledSD,2) * ((1 / studyData.n1) + (1 / studyData.n2)); // calculate variance of the difference
-				studyData.t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.df); // calculate critical t value
+				studyData.df = studyData.n1 + studyData.n2 - 2; // degrees of freedom
+				studyData.pooledSD = Math.sqrt(((studyData.n1 - 1) * Math.pow(studyData.sd1, 2) + (studyData.n2 - 1) * Math.pow(studyData.sd2, 2)) / studyData.df); // calculate pooled standard deviation
+				studyData.varDiff = Math.pow(studyData.pooledSD, 2) * ((1 / studyData.n1) + (1 / studyData.n2)); // calculate variance of the difference
+				studyData.t_crit = jStat.studentt.inv((1 - (maData.alpha / 2)), studyData.df); // calculate critical t value
 				studyData.moeDiff = studyData.t_crit * Math.sqrt(studyData.varDiff); // calculate margin of error of difference
 				studyData.weight = 1 / studyData.varDiff; // calculate (fixed) study weight
 				studyData.t = (studyData.mDiff - maData.nullMean) / Math.sqrt(studyData.varDiff); // calculate t value
@@ -170,10 +257,10 @@ function getData(maType) {
 			case "meanPairedDiffs":
 				// NOT WORKING CURRENTLY
 				studyData.mDiff = studyData.m2 - studyData.m1; // calculate mean difference
-				studyData.df = studyData.n-1; // degrees of freedom
-				studyData.sdDiff = Math.sqrt((studyData.mDiff*studyData.mDiff) / studyData.df); // calculate sd of the difference
-				studyData.varDiff = Math.pow(studyData.sdDiff,2) * (1 / studyData.n); // calculate variance of the difference
-				studyData.t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.df); // calculate critical t value
+				studyData.df = studyData.n - 1; // degrees of freedom
+				studyData.sdDiff = Math.sqrt((studyData.mDiff * studyData.mDiff) / studyData.df); // calculate sd of the difference
+				studyData.varDiff = Math.pow(studyData.sdDiff, 2) * (1 / studyData.n); // calculate variance of the difference
+				studyData.t_crit = jStat.studentt.inv((1 - (maData.alpha / 2)), studyData.df); // calculate critical t value
 				studyData.moeDiff = studyData.t_crit * Math.sqrt(studyData.varDiff); // calculate margin of error of difference
 				studyData.weight = 1 / studyData.varDiff; // calculate (fixed) study weight
 				studyData.t = (studyData.mDiff - maData.nullMean) / Math.sqrt(studyData.varDiff); // calculate t value
@@ -181,63 +268,59 @@ function getData(maType) {
 				studyData.mid = studyData.mDiff;
 				break;
 			case "d":
-				studyData.sqrtN = Math.sqrt(1/studyData.n); // square root of (1/N)
+				studyData.sqrtN = Math.sqrt(1 / studyData.n); // square root of (1/N)
 				studyData.ncp = studyData.d / studyData.sqrtN; // non-central parameter
-				studyData.df = studyData.n-1; // degrees of freedom
-				studyData.t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.df); // critical t
+				studyData.df = studyData.n - 1; // degrees of freedom
+				studyData.t_crit = jStat.studentt.inv((1 - (maData.alpha / 2)), studyData.df); // critical t
 				studyData.ncpL = studyData.ncp - studyData.t_crit; // first guess for ncpL
 				studyData.ncpU = studyData.ncp + studyData.t_crit; // first guess for ncpU
-				studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1-(maData.alpha/2)), Tol: 0.0000000001 }); // use goalSeek to find better ncpL
-				studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (maData.alpha/2), Tol: 0.0000000001 }); // use goalSeek to find better ncpU
-				studyData.dLL = studyData.ncpL * studyData.sqrtN; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
-				studyData.dUL = studyData.ncpU * studyData.sqrtN; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
-				studyData.dMod = Math.exp(jStat.gammaln(studyData.df/2)) / (Math.sqrt(studyData.df/2) * Math.exp(jStat.gammaln((studyData.df/2)-0.5))); // modifier for unbiased d
-				studyData.dUnb = studyData.d * studyData.dMod; // unbiased d
-				studyData.dMoeL = studyData.d - studyData.dLL; // lower margin of error for d
-				studyData.dMoeU = studyData.dUL - studyData.d; // upper margin of error for d
-				studyData.dUnbMoeL = studyData.dUnb - studyData.dLL; // lower margin of error for unbiased d
-				studyData.dUnbMoeU = studyData.dUL - studyData.dUnb; // upper margin of error for unbiased d
-				studyData.dVar = (1+(studyData.d*studyData.d)/2) / studyData.n; // calculate d variance
-				studyData.dWeight = 1 / studyData.dVar; // calculate study weight when using d
-				studyData.dUnbVar = studyData.dMod * studyData.dMod * (1+(studyData.d*studyData.d)/2) / studyData.n;// calculate unbiased d variance
-				studyData.dUnbWeight = 1 / studyData.dUnbVar; // calculate study weight when using unbiased d
-				studyData.t = (studyData.dUnb - maData.nullMean) / Math.sqrt(studyData.dUnbVar); // calculate t
+				studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1 - (maData.alpha / 2)), Tol: 0.0000000001 }); // use goalSeek to find better ncpL
+				studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (maData.alpha / 2), Tol: 0.0000000001 }); // use goalSeek to find better ncpU
+				studyData.ll = studyData.ncpL * studyData.sqrtN; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
+				studyData.ul = studyData.ncpU * studyData.sqrtN; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
+				studyData.var = (1 + (studyData.d * studyData.d) / 2) / studyData.n; // calculate d variance
+				studyData.weight = 1 / studyData.var; // calculate study weight when using d
+				if ($('#dUnbiased input').prop("checked")) { // use dUnbiased values
+					studyData.dMod = Math.exp(jStat.gammaln(studyData.df / 2)) / (Math.sqrt(studyData.df / 2) * Math.exp(jStat.gammaln((studyData.df / 2) - 0.5))); // modifier for unbiased d
+					studyData.var = studyData.dMod * studyData.dMod * (1 + (studyData.d * studyData.d) / 2) / studyData.n;// changed variance to unbiased d variance
+					studyData.d = studyData.d * studyData.dMod; // change d to unbiased d
+					studyData.weight = 1 / studyData.var; // change weight to unbiased d weight
+				}
+				studyData.t = (studyData.d - maData.nullMean) / Math.sqrt(studyData.var); // calculate t
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
 				studyData.mid = studyData.d;
 				break;
 			case "dDiffs":
-				studyData.sqrtN12 = Math.sqrt(1/studyData.n1 + 1/studyData.n2); // square root of (1/N1 + 1/N2)
+				studyData.sqrtN12 = Math.sqrt(1 / studyData.n1 + 1 / studyData.n2); // square root of (1/N1 + 1/N2)
 				studyData.ncp = studyData.d / studyData.sqrtN12; // non-central parameter
 				studyData.df = studyData.n1 + studyData.n2 - 2; // degrees of freedom
-				studyData.t_crit = jStat.studentt.inv((1-(maData.alpha/2)), studyData.df); // critical t
+				studyData.t_crit = jStat.studentt.inv((1 - (maData.alpha / 2)), studyData.df); // critical t
 				studyData.ncpL = studyData.ncp - studyData.t_crit; // first guess for ncpL
 				studyData.ncpU = studyData.ncp + studyData.t_crit; // first guess for ncpU
-				studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1-(maData.alpha/2)), Tol: 0.0000000001 }); // use goalSeek to find better ncpL
-				studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (maData.alpha/2), Tol: 0.0000000001 }); // use goalSeek to find better ncpU
-				studyData.dLL = studyData.ncpL * studyData.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
-				studyData.dUL = studyData.ncpU * studyData.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
-				studyData.dMod = Math.exp(jStat.gammaln(studyData.df/2)) / (Math.sqrt(studyData.df/2) * Math.exp(jStat.gammaln((studyData.df/2)-0.5))); // modifier for unbiased d
-				studyData.dUnb = studyData.d * studyData.dMod; // unbiased d
-				studyData.dMoeL = studyData.d - studyData.dLL; // lower margin of error for d
-				studyData.dMoeU = studyData.dUL - studyData.d; // upper margin of error for d
-				studyData.dUnbMoeL = studyData.dUnb - studyData.dLL; // lower margin of error for unbiased d
-				studyData.dUnbMoeU = studyData.dUL - studyData.dUnb; // upper margin of error for unbiased d
-				studyData.dVar = (studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2 * (studyData.n1+studyData.n2)); // calculate d variance
-				studyData.dWeight = 1 / studyData.dVar; // calculate study weight when using d
-				studyData.dUnbVar = studyData.dMod * studyData.dMod * ((studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2 * (studyData.n1+studyData.n2))); // calculate unbiased d variance
-				studyData.dUnbWeight = 1 / studyData.dUnbVar; // calculate study weight when using unbiased d
-				studyData.t = (studyData.dUnb - maData.nullMean) / Math.sqrt((studyData.n1+studyData.n2) / (studyData.n1*studyData.n2) + (studyData.d*studyData.d) / (2*(studyData.n1+studyData.n2))); // calculate t
+				studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1 - (maData.alpha / 2)), Tol: 0.0000000001 }); // use goalSeek to find better ncpL
+				studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (maData.alpha / 2), Tol: 0.0000000001 }); // use goalSeek to find better ncpU
+				studyData.ll = studyData.ncpL * studyData.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
+				studyData.ul = studyData.ncpU * studyData.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
+				studyData.var = (studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (studyData.d * studyData.d) / (2 * (studyData.n1 + studyData.n2)); // calculate d variance
+				studyData.weight = 1 / studyData.var; // calculate study weight when using d
+				if ($('#dUnbiased input').prop("checked")) { // use dUnbiased values
+					studyData.dMod = Math.exp(jStat.gammaln(studyData.df / 2)) / (Math.sqrt(studyData.df / 2) * Math.exp(jStat.gammaln((studyData.df / 2) - 0.5))); // modifier for unbiased d
+					studyData.var = studyData.dMod * studyData.dMod * ((studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (studyData.d * studyData.d) / (2 * (studyData.n1 + studyData.n2))); // change variance to unbiased d variance
+					studyData.d = studyData.d * studyData.dMod; // change d to unbiased d
+					studyData.weight = 1 / studyData.var; // change weight to unbiased d weight
+				}
+				studyData.t = (studyData.d - maData.nullMean) / Math.sqrt((studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (studyData.d * studyData.d) / (2 * (studyData.n1 + studyData.n2))); // calculate t
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
 				studyData.mid = studyData.d;
 				break;
 			case "r":
-				studyData.rZ = 0.5 * Math.log((1+studyData.r)/(1-studyData.r)); // z for r
+				studyData.rZ = 0.5 * Math.log((1 + studyData.r) / (1 - studyData.r)); // z for r
 				studyData.varZ = 1 / (studyData.n - 3); // var of z
 				studyData.z = (studyData.rZ - maData.nullMean) / Math.sqrt(studyData.varZ); // z
-				studyData.zLL = studyData.rZ - jStat.normal.inv((1-(maData.alpha/2)), 0, 1) * Math.sqrt(studyData.varZ); // z LL
-				studyData.zUL = studyData.rZ + jStat.normal.inv((1-(maData.alpha/2)), 0, 1) * Math.sqrt(studyData.varZ); // z UL
-				studyData.rLL = (Math.exp(2*studyData.zLL)-1) / (Math.exp(2*studyData.zLL)+1); // r LL
-				studyData.rUL = (Math.exp(2*studyData.zUL)-1) / (Math.exp(2*studyData.zUL)+1); // r UL
+				studyData.zLL = studyData.rZ - jStat.normal.inv((1 - (maData.alpha / 2)), 0, 1) * Math.sqrt(studyData.varZ); // z LL
+				studyData.zUL = studyData.rZ + jStat.normal.inv((1 - (maData.alpha / 2)), 0, 1) * Math.sqrt(studyData.varZ); // z UL
+				studyData.rLL = (Math.exp(2 * studyData.zLL) - 1) / (Math.exp(2 * studyData.zLL) + 1); // r LL
+				studyData.rUL = (Math.exp(2 * studyData.zUL) - 1) / (Math.exp(2 * studyData.zUL) + 1); // r UL
 				studyData.weight = 1 / studyData.varZ; // weight
 				studyData.p = 2 * (1 - jStat.normal.cdf(Math.abs(studyData.z), 0, 1)); // p
 				studyData.mid = studyData.rZ;
@@ -247,103 +330,131 @@ function getData(maType) {
 		}
 		maData.dataSet[i] = Object.assign({}, studyData); // copy the study data into the meta-analysis dataSet array
 	});
+
 	return maData;
+
 }
 
 // calculate CIs using non-central t function
 function nonCentralT(t, ncp, df) {
-	var df2, tOverSqrtDF, pointSep, pointSepTmp, constant, i, nct;
-	df2 = df - 1; // degrees of freedom - 1
-	tOverSqrtDF = t / Math.sqrt(df); // t over square root of degrees of freedom
-	pointSep = (Math.sqrt(df)+7)/100; // separation of points
-	constant = Math.exp((2 - df) * 0.5 * Math.log(2) - jStat.gammaln(df/2)) * pointSep / 3; // constant
-	// first term in cross product summation (df=0 has its own variant)
-	if (df2 > 0) { nct = jStat.normal.cdf(0 * tOverSqrtDF - ncp, 0, 1) * Math.pow(0, df2) * Math.exp(-0.5 * 0 * 0); }
-	else { nct = jStat.normal.cdf(0 * tOverSqrtDF - ncp, 0, 1) * Math.exp(-0.5 * 0 * 0); }
-	// add second term with multiplier of 4
-	nct += 4 * jStat.normal.cdf(pointSep * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSep, df2) * Math.exp(-0.5 * pointSep * pointSep);
-	// loop to add 98 values
-	for (i = 1; i < 50; i++) {
+
+	var df2 = df - 1, // degrees of freedom - 1
+		tOverSqrtDF = t / Math.sqrt(df), // t over square root of degrees of freedom
+		pointSep = (Math.sqrt(df) + 7) / 100, // separation of points
+		pointSepTmp = 0, // temporary value holder
+		constant = Math.exp((2 - df) * 0.5 * Math.log(2) - jStat.gammaln(df / 2)) * pointSep / 3, // constant
+		i = 0, // counter
+		nct = 0; // non-central t
+
+	if (df2 > 0) { // first term in cross product summation (df = 0 has its own variant)
+		nct = jStat.normal.cdf(0 * tOverSqrtDF - ncp, 0, 1) * Math.pow(0, df2) * Math.exp(-0.5 * 0 * 0);
+	} else {
+		nct = jStat.normal.cdf(0 * tOverSqrtDF - ncp, 0, 1) * Math.exp(-0.5 * 0 * 0);
+	}
+	nct += 4 * jStat.normal.cdf(pointSep * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSep, df2) * Math.exp(-0.5 * pointSep * pointSep); // add second term with multiplier of 4
+	for (i = 1; i < 50; i++) { // loop to add 98 values
 		pointSepTmp = 2 * i * pointSep;
 		nct += 2 * jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
 		pointSepTmp += pointSep;
 		nct += 4 * jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
 	}
-	// add last term
-	pointSepTmp += pointSep;
+	pointSepTmp += pointSep; // add last term
 	nct += jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
-	// multiply by the constant
-	nct *= constant;
+	nct *= constant; // multiply by the constant
+
 	return nct;
+
 }
 
 // calculate summed weights for fixed effects model, return as object of 4 values
 function getFixedWeightSums(dataset) {
-    var i, fixedWeights = { sumWeights:0, sumWeightsTimesMeans:0, sumWeightsTimesSquaredMeans:0, sumSquaredWeights:0 }; // create an object to hold the weight values
-	// for each study, add the weight measures, resulting in summed weights
-	for (i = 0; i < dataset.length; i++) {
+
+	var	fixedWeights = { // object to hold the weights
+			sumWeights:0,
+			sumWeightsTimesMeans:0,
+			sumWeightsTimesSquaredMeans:0, 
+			sumSquaredWeights:0
+		},
+		i = 0; // counter
+	
+	for (i = 0; i < dataset.length; i++) { // for each study, add the weight measures, resulting in summed weights
 		fixedWeights.sumWeights += dataset[i].weight;
-		fixedWeights.sumWeightsTimesMeans += ( dataset[i].weight * dataset[i].mid );
-		fixedWeights.sumWeightsTimesSquaredMeans += ( dataset[i].weight * ( dataset[i].mid * dataset[i].mid ) );
-		fixedWeights.sumSquaredWeights += ( dataset[i].weight * dataset[i].weight );
+		fixedWeights.sumWeightsTimesMeans += (dataset[i].weight * dataset[i].mid);
+		fixedWeights.sumWeightsTimesSquaredMeans += (dataset[i].weight * (dataset[i].mid * dataset[i].mid));
+		fixedWeights.sumSquaredWeights += (dataset[i].weight * dataset[i].weight);
 	}
+
     return fixedWeights;
+
 }
 
 // calculate heterogeneity measures, return as object of 15 values
 function getHeterogeneity(weights, df, alpha) {
-    var q, c, tSq, t, iSq, b, b1, b2, l, u, lltSq, ultSq, llt, ult, p;
-    q = weights.sumWeightsTimesSquaredMeans - ( ( weights.sumWeightsTimesMeans * weights.sumWeightsTimesMeans ) / weights.sumWeights ); // Q
-    c = weights.sumWeights - ( weights.sumSquaredWeights / weights.sumWeights ); // C
-    if (c === 0) { tSq = 0; } else { tSq = Math.max(0, ( (q - df) / c ) ); } // Tau squared
-    t = Math.sqrt(tSq); // Tau
-    iSq = Math.max(0, ((q - df) / q)); // I squared
-    // calculating CI on Tau
-    b1 = 0.5 * ( ( Math.log(q) - Math.log(df) ) / ( Math.sqrt(q*2) - Math.sqrt((2*df)-1) ) ); // B1
-    b2 = Math.sqrt((1 / ((2 * (df-1)) * (1 - (1 / (3 * ((df-1)*(df-1)))))))); // B2
-    if (q > (df+1)) { b = b1; } else { b = b2; } // B
-    l = Math.exp( (0.5 * Math.log(q / df)) - (jStat.normal.inv((1-(alpha/2)), 0, 1) * b) ); // L
-    u = Math.exp( (0.5 * Math.log(q / df)) + (jStat.normal.inv((1-(alpha/2)), 0, 1) * b) ); // U
-    lltSq = Math.max(0, ( (df * ((l*l) - 1))) / c); // Lower 95% CI Tau^2 (cannot be less than zero)
-    ultSq = Math.max(0, ( (df * ((u*u) - 1))) / c); // Upper 95% CI Tau^2 (cannot be less than zero)
-    llt = Math.sqrt(lltSq); // Lower 95% CI Tau
-    ult = Math.sqrt(ultSq); // Upper 95% CI Tau
-    p = 1 - jStat.chisquare.cdf(q, df); // p value
-    // pass these values into an object to be sent back
-    var heterogeneity = { q:q, c:c, tSq:tSq, t:t, iSq:iSq, b1:b1, b2:b2, b:b, l:l, u:u, lltSq:lltSq, ultSq:ultSq, llt:llt, ult:ult, p:p };
-    return heterogeneity; // send the data back
+
+	var het = {}; // heterogeneity object to return
+
+    het.q = weights.sumWeightsTimesSquaredMeans - ((weights.sumWeightsTimesMeans * weights.sumWeightsTimesMeans) / weights.sumWeights); // Q
+    het.c = weights.sumWeights - (weights.sumSquaredWeights / weights.sumWeights); // C
+    het.tSq = (het.c === 0) ? 0 : (Math.max(0, ((het.q - df) / het.c ))); // Tau squared (minimum of 0)
+    het.t = Math.sqrt(het.tSq); // Tau
+    het.iSq = Math.max(0, ((het.q - df) / het.q)); // I Squared (minimum of 0)
+    het.b1 = 0.5 * ((Math.log(het.q) - Math.log(df)) / (Math.sqrt(het.q * 2) - Math.sqrt((2 * df) - 1))); // B1
+    het.b2 = (df > 1) ? Math.sqrt((1 / ((2 * (df - 1)) * (1 - (1 / (3 * ((df - 1) * (df - 1)))))))) : 0; // B2
+    het.b = (het.q > (df + 1)) ? het.b1 : het.b2; // B
+    het.l = Math.exp((0.5 * Math.log(het.q / df)) - (jStat.normal.inv((1 - (alpha / 2)), 0, 1) * het.b)); // L
+    het.u = Math.exp((0.5 * Math.log(het.q / df)) + (jStat.normal.inv((1 - (alpha / 2)), 0, 1) * het.b)); // U
+    het.lltSq = Math.max(0, ((df * ((het.l * het.l) - 1))) / het.c); // Lower 95% CI for Tau squared (minimum of 0)
+    het.ultSq = Math.max(0, ((df * ((het.u * het.u) - 1))) / het.c); // Upper 95% CI for Tau squared (minimum of 0)
+    het.llt = Math.sqrt(het.lltSq); // Lower 95% CI for Tau
+    het.ult = Math.sqrt(het.ultSq); // Upper 95% CI for Tau
+    het.p = 1 - jStat.chisquare.cdf(het.q, df); // p value
+
+    return het;
+
 }
 
 // calculate summed weights for random effects model, return as object of 2 values
 function getRandomWeightSums(dataset) {
-    var randomWeights = { sumWeightsTimesMeans:0, sumWeights:0 }; // object to hold weight values (initially zero)
-	for (var i=0;i<dataset.length;i++) { // loop through each study
+
+	var randomWeights = { // object to hold weight sums
+			sumWeightsTimesMeans:0,
+			sumWeights:0
+		},
+		i = 0; // counter
+	
+	for (i = 0; i < dataset.length; i++) { // loop through each study
 		randomWeights.sumWeightsTimesMeans += dataset[i].randomWeight * dataset[i].mid; // add study's weight * mean
 		randomWeights.sumWeights += dataset[i].randomWeight; // add study's weight
 	}
+
     return randomWeights; // pass back the data
+
 }
 
-// calculate meta-analysis, return as object of 8 values
+// calculate meta-analysis, return as object
 function metaAnalyse(weights, alpha, nullMean, maType) {
+
 	var maData = {}; // create an object to hold the meta-analysis data
+
 	maData.mean = weights.sumWeightsTimesMeans / weights.sumWeights; // meta-analysed mean
 	maData.variance = 1 / weights.sumWeights; // variance of meta-analysed mean
 	maData.sd = Math.sqrt(maData.variance); // standard deviation of meta-analysed mean
-	maData.moe = jStat.normal.inv((1-(alpha/2)), 0, 1) * maData.sd; // margin of error of meta-analysed mean
+	maData.moe = jStat.normal.inv((1 - (alpha / 2)), 0, 1) * maData.sd; // margin of error of meta-analysed mean
 	maData.ll = maData.mean - maData.moe; // lower limit of 95% CI
 	maData.ul = maData.mean + maData.moe; // upper limit of 95% CI
 	maData.z = (maData.mean - nullMean) / maData.sd; // z value
 	maData.p = 2 * (1 - (jStat.normal.cdf(Math.abs(maData.z), 0, 1))); // p value
 	switch (maType.name) {
 		case "r": // make some adjustments for Pearson correlation meta-analysis type
-			maData.mean = (Math.exp(2*maData.mean)-1) / (Math.exp(2*maData.mean)+1); // M of r
-			maData.rMOE = (Math.exp(2*maData.moe)-1) / (Math.exp(2*maData.moe)+1); // margin of error of r
+			maData.mean = (Math.exp(2 * maData.mean) - 1) / (Math.exp(2 * maData.mean) + 1); // M of r
+			maData.rMOE = (Math.exp(2 * maData.moe) - 1) / (Math.exp(2 * maData.moe) + 1); // margin of error of r
 			maData.ll = maData.mean - maData.rMOE; // lower limit of 95% CI of meta-analysed r
 			maData.ul = maData.mean + maData.rMOE; // upper limit of 95% CI of meta-analysed r
 			break;
 		default:
 			break;
 	}
+
 	return maData;
+
 }
