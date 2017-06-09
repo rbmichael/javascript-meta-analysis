@@ -88,7 +88,8 @@ $(function() {
 		var maData = {}, // main meta-analysis data object
 			i = 0, // counter
 			j = 0, // counter
-			csv = ""; // for holding meta-analysis as csv
+			csv = "", // for holding meta-analysis as csv
+			timeTaken = performance.now(); // records time taken to run the analysis
 
 		/* ---------- */
 		/* step 1: check data entry, proceed if OK, else show an error and stop */
@@ -136,7 +137,7 @@ $(function() {
 		}
 		$('#display').append("<div>HETEROGENEITY INFORMATION<br></div>");
 		for (i in maData.heterogeneity) {
-			$('#display div:last').append(i + " = " + maData.heterogeneity[i].toFixed(3) + "<br>");
+			$('#display div:last').append(i + " = " + maData.heterogeneity[i].toFixed(3) + " ");
 		}
 
 		/* ---------- */
@@ -180,6 +181,12 @@ $(function() {
 		$('#display').append("<a id=\"download\">DOWNLOAD CSV</a>");
 		$('#download').attr("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
 		$('#download').attr("download", "myMetaAnalysis.csv");
+
+		/* ---------- */
+		/* step 6: display the time taken to run the meta-analysis */
+		/* ---------- */
+		timeTaken = performance.now() - timeTaken; // calculate time taken to run meta-analysis
+		$('#display').append("<div>Time taken to run analysis: " + timeTaken.toFixed(0) + "ms</div>"); // and display
 
 	});
 
@@ -274,8 +281,10 @@ function getData(maType) {
 				studyData.t_crit = jStat.studentt.inv((1 - (maData.alpha / 2)), studyData.df); // critical t
 				studyData.ncpL = studyData.ncp - studyData.t_crit; // first guess for ncpL
 				studyData.ncpU = studyData.ncp + studyData.t_crit; // first guess for ncpU
-				studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1 - (maData.alpha / 2)), Tol: 0.0000000001 }); // use goalSeek to find better ncpL
-				studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (maData.alpha / 2), Tol: 0.0000000001 }); // use goalSeek to find better ncpU
+				studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1 - (maData.alpha / 2)), Tol: 0.000001 }); // use goalSeek to find better ncpL
+				studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (maData.alpha / 2), Tol: 0.000001 }); // use goalSeek to find better ncpU
+				if (studyData.ncpL === undefined) { studyData.ncpL = studyData.ncp - studyData.t_crit; } // workaround for nonCentralT failing at high Ns
+				if (studyData.ncpU === undefined) { studyData.ncpU = studyData.ncp + studyData.t_crit; } // workaround for nonCentralT failing at high Ns
 				studyData.ll = studyData.ncpL * studyData.sqrtN; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
 				studyData.ul = studyData.ncpU * studyData.sqrtN; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
 				studyData.var = (1 + (studyData.d * studyData.d) / 2) / studyData.n; // calculate d variance
@@ -297,8 +306,10 @@ function getData(maType) {
 				studyData.t_crit = jStat.studentt.inv((1 - (maData.alpha / 2)), studyData.df); // critical t
 				studyData.ncpL = studyData.ncp - studyData.t_crit; // first guess for ncpL
 				studyData.ncpU = studyData.ncp + studyData.t_crit; // first guess for ncpU
-				studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1 - (maData.alpha / 2)), Tol: 0.0000000001 }); // use goalSeek to find better ncpL
-				studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (maData.alpha / 2), Tol: 0.0000000001 }); // use goalSeek to find better ncpU
+				studyData.ncpL = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpL, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (1 - (maData.alpha / 2)), Tol: 0.000001 }); // use goalSeek to find better ncpL
+				studyData.ncpU = goalSeek({ Func: nonCentralT, aFuncParams: [studyData.ncp, studyData.ncpU, studyData.df], oFuncArgTarget: { Position: 1 }, Goal: (maData.alpha / 2), Tol: 0.000001 }); // use goalSeek to find better ncpU
+				if (studyData.ncpL === undefined) { studyData.ncpL = studyData.ncp - studyData.t_crit; } // workaround for nonCentralT failing at high Ns
+				if (studyData.ncpU === undefined) { studyData.ncpU = studyData.ncp + studyData.t_crit; } // workaround for nonCentralT failing at high Ns
 				studyData.ll = studyData.ncpL * studyData.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
 				studyData.ul = studyData.ncpU * studyData.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
 				studyData.var = (studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (studyData.d * studyData.d) / (2 * (studyData.n1 + studyData.n2)); // calculate d variance
@@ -329,13 +340,14 @@ function getData(maType) {
 				break;
 		}
 		maData.dataSet[i] = Object.assign({}, studyData); // copy the study data into the meta-analysis dataSet array
+		console.log(maData.dataSet[i]);
 	});
 
 	return maData;
 
 }
 
-// calculate CIs using non-central t function
+// calculate CIs using non-central t function -- needs work, failing at large values of N (d and dDiffs)
 function nonCentralT(t, ncp, df) {
 
 	var df2 = df - 1, // degrees of freedom - 1
