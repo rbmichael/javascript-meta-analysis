@@ -5,7 +5,7 @@ $(function() {
 		currentMAType = 0, // current meta-analysis type; defaults to Single means meta-analysis
 		i = 0, // counter
 		j = 0; // another counter
-	
+
  	// build an array of objects of the types of meta-analysis available
  	maTypesArray.push({ name:"means", description:"Single means", dataFields:["M","SD","N"] });
 	maTypesArray.push({ name:"meanDiffs", description: "Difference between two independent group means", dataFields:["M1","SD1","N1","M2","SD2","N2"] });
@@ -58,7 +58,7 @@ $(function() {
 		$('#add').click(); $('#add').click(); // add the 2 minimum study rows
 
 	});
-	
+
 	// set the csv import button behaviour 
 	$('#updateCSV').click(function() {
 
@@ -81,15 +81,18 @@ $(function() {
 		}
 
 	});
-	
+
 	// set the 'run' button behaviour
 	$('#run').click(function() {
 
-		var maData = {}, // main meta-analysis data object
+		var timeTaken = performance.now(), // records time taken to run the analysis
+			maData = {}, // main meta-analysis data object
 			i = 0, // counter
 			j = 0, // counter
 			csv = "", // for holding meta-analysis as csv
-			timeTaken = performance.now(); // records time taken to run the analysis
+			csvLoop = [], // array of objects to loop through to output into the csv
+			forestPlotConfig = {}, // for holding forest plot config information
+			forestPlotData = []; // for holding forest plot data
 
 		/* ---------- */
 		/* step 1: check data entry, proceed if OK, else show an error and stop */
@@ -121,6 +124,7 @@ $(function() {
 		/* step 4: display meta-analysis results */
 		/* ---------- */
 		$('#display *').detach(); // first clear the display
+		/*
 		for (i = 0; i < maData.dataSet.length; i++) { // loop through individual studies and display data
 			$('#display').append("<div>Study " + (i + 1) + "</div>");
 			for (j in maData.dataSet[i]) {
@@ -139,11 +143,12 @@ $(function() {
 		for (i in maData.heterogeneity) {
 			$('#display div:last').append(i + " = " + maData.heterogeneity[i].toFixed(3) + " ");
 		}
+		*/
 
 		/* ---------- */
 		/* step 5: output data to csv in an <a> */
 		/* ---------- */
-		csv = "INDIVIDUAL STUDIES\n";
+		csv = "INDIVIDUAL STUDIES\n"; // start with the individual studies
 		for (i in maData.dataSet[0]) {
 			csv += i + ",";
 		}
@@ -154,36 +159,78 @@ $(function() {
 			}
 			csv += "\n";
 		}
-		csv += "FIXED EFFECTS MODEL\n";
-		for (i in maData.fixed) {
-			csv += i + ",";
+		csvArray = [ // build an array to more conveniently loop through the rest of the information
+			["FIXED EFFECTS MODEL", maData.fixed],
+			["RANDOM EFFECTS MODEL", maData.random],
+			["HETEROGENEITY INFORMATION", maData.heterogeneity],
+			["FIXED WEIGHTS INFORMATION", maData.fixedWeights],
+			["RANDOM WEIGHTS INFORMATION", maData.randomWeights]
+		];
+		for (i = 0; i < csvArray.length; i++) { // loop through the array and add the information
+			csv += csvArray[i][0] + "\n";
+			for (j in csvArray[i][1]) {
+				csv += j + ",";
+			}
+			csv += "\n";
+			for (j in csvArray[i][1]) {
+				csv += csvArray[i][1][j] + ",";
+			}
+			csv += "\n";
 		}
-		csv += "\n";
-		for (i in maData.fixed) {
-			csv += maData.fixed[i] + ",";
-		}
-		csv += "\nRANDOM EFFECTS MODEL\n";
-		for (i in maData.random) {
-			csv += i + ",";
-		}
-		csv += "\n";
-		for (i in maData.random) {
-			csv += maData.random[i] + ",";
-		}
-		csv += "\nHETEROGENEITY INFORMATION\n";
-		for (i in maData.heterogeneity) {
-			csv += i + ",";
-		}
-		csv += "\n";
-		for (i in maData.heterogeneity) {
-			csv += maData.heterogeneity[i] + ",";
-		}
-		$('#display').append("<a id=\"download\">DOWNLOAD CSV</a>");
+		$('#display').append("<a id=\"download\">Download data as CSV</a>");
 		$('#download').attr("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
 		$('#download').attr("download", "myMetaAnalysis.csv");
 
 		/* ---------- */
-		/* step 6: display the time taken to run the meta-analysis */
+		/* step 6: display the forest plot */
+		/* ---------- */
+		forestPlotConfig = { // forest plot configuration
+			mountNode: '#forestPlot', // where to mount the plot
+			vBar: maData.nullMean // vertical bar for the null hypothesis
+		};
+		forestPlotData.push({ // headings row
+			description: "Meta-analysis Forest Plot",
+			overrideLabel: "Mean (LL, UL)"
+		});
+		for (i = 0; i < maData.dataSet.length; i++) { // loop through studies, geting mean, ll, ul
+			forestPlotData.push({ // add to the forest plot data variable
+				description: "Study "+(i+1), // the study "name"
+				descriptionOffset: 1, // indent the study name
+				effect: {
+					effect: maData.dataSet[i].mid, // the mean
+					low: maData.dataSet[i].ll, // the lower limit
+					high: maData.dataSet[i].ul // the upper limit
+				},
+				markerSize: (maData.dataSet[i].weight / maData.fixedWeights.sumWeights) // size of the study's square
+			});
+		}
+		forestPlotData.push({ // add the fixed effects model data
+			description:"Fixed effects model",
+			effect: {
+				effect: maData.fixed.mean,
+				low: maData.fixed.ll,
+				high: maData.fixed.ul
+			},
+			markerSize: 0.5
+		});
+		forestPlotData.push({ // add the random effects model data
+			description:"Random effects model",
+			effect: {
+				effect: maData.random.mean,
+				low: maData.random.ll,
+				high: maData.random.ul
+			},
+			markerSize: 0.5
+		});
+		$('#display').append("<div id=\"forestPlot\"></div>"); // add a container for the forest plot
+		forestPlot(forestPlotConfig, forestPlotData); // display the forest plot
+		$('#display').append("<button id=\"save\">Save forest plot as PNG</button>"); // add a button to save the forest plot
+		$('#save').click(function() { // set the button's behaviour
+			saveSvgAsPng(d3.select('svg').node(), "myForestPlot.png"); // save the forest plot
+		});
+
+		/* ---------- */
+		/* step 7: display the time taken to run the meta-analysis */
 		/* ---------- */
 		timeTaken = performance.now() - timeTaken; // calculate time taken to run meta-analysis
 		$('#display').append("<div>Time taken to run analysis: " + timeTaken.toFixed(0) + "ms</div>"); // and display
@@ -192,7 +239,7 @@ $(function() {
 
 	// hide the dUnbiased checkbox
 	$('#dUnbiased').hide();
-	
+
 	// add the initial 2 study rows
 	$('#add').click();
 	$('#add').click();
@@ -248,6 +295,8 @@ function getData(maType) {
 				studyData.t = (studyData.m - maData.nullMean) / studyData.se; // calculate t value
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
 				studyData.mid = studyData.m;
+				studyData.ll = studyData.mid - studyData.moe;
+				studyData.ul = studyData.mid + studyData.moe;
 				break;
 			case "meanDiffs":
 				studyData.mDiff = studyData.m2 - studyData.m1; // calculate mean difference
@@ -260,6 +309,8 @@ function getData(maType) {
 				studyData.t = (studyData.mDiff - maData.nullMean) / Math.sqrt(studyData.varDiff); // calculate t value
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
 				studyData.mid = studyData.mDiff;
+				studyData.ll = studyData.mid - studyData.moeDiff;
+				studyData.ul = studyData.mid + studyData.moeDiff;
 				break;
 			case "meanPairedDiffs":
 				// NOT WORKING CURRENTLY
@@ -273,6 +324,8 @@ function getData(maType) {
 				studyData.t = (studyData.mDiff - maData.nullMean) / Math.sqrt(studyData.varDiff); // calculate t value
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
 				studyData.mid = studyData.mDiff;
+				studyData.ll = studyData.mid - studyData.moeDiff;
+				studyData.ul = studyData.mid + studyData.moeDiff;
 				break;
 			case "d":
 				studyData.sqrtN = Math.sqrt(1 / studyData.n); // square root of (1/N)
@@ -335,12 +388,13 @@ function getData(maType) {
 				studyData.weight = 1 / studyData.varZ; // weight
 				studyData.p = 2 * (1 - jStat.normal.cdf(Math.abs(studyData.z), 0, 1)); // p
 				studyData.mid = studyData.rZ;
+				studyData.ll = studyData.rLL;
+				studyData.ul = studyData.rUL;
 				break;
 			default:
 				break;
 		}
 		maData.dataSet[i] = Object.assign({}, studyData); // copy the study data into the meta-analysis dataSet array
-		console.log(maData.dataSet[i]);
 	});
 
 	return maData;
@@ -429,14 +483,14 @@ function getHeterogeneity(weights, df, alpha) {
 function getRandomWeightSums(dataset) {
 
 	var randomWeights = { // object to hold weight sums
-			sumWeightsTimesMeans:0,
-			sumWeights:0
+			sumWeights:0,
+			sumWeightsTimesMeans:0
 		},
 		i = 0; // counter
 	
 	for (i = 0; i < dataset.length; i++) { // loop through each study
-		randomWeights.sumWeightsTimesMeans += dataset[i].randomWeight * dataset[i].mid; // add study's weight * mean
 		randomWeights.sumWeights += dataset[i].randomWeight; // add study's weight
+		randomWeights.sumWeightsTimesMeans += dataset[i].randomWeight * dataset[i].mid; // add study's weight * mean
 	}
 
     return randomWeights; // pass back the data
