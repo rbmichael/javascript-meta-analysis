@@ -11,7 +11,7 @@ $(function() {
 	maTypesArray.push({ name:"meanDiffs", description: "Difference between two independent group means", dataFields:["M1","SD1","N1","M2","SD2","N2"] });
 	maTypesArray.push({ name:"meanPairedDiffs", description: "Difference between two dependent means", dataFields:["M1","SD1","M2","SD2","N","t"] });
 	maTypesArray.push({ name:"d", description:"Cohen's d for a single group", dataFields:["d","N"] });
-	maTypesArray.push({ name:"dDiffs", description:"Cohen's d between two independent groups", dataFields:["d","N1","N2"] });
+	maTypesArray.push({ name:"dDiffs", description:"Cohen's d for two independent groups", dataFields:["d","N1","N2"] });
 	maTypesArray.push({ name:"r", description:"Pearson's r correlations", dataFields:["r","N"] });
 
 	// populate the meta-analysis <select> element (for choosing a type of meta-analysis) from maTypesArray
@@ -23,7 +23,7 @@ $(function() {
 	$('#maSelector').change(function() {
 
 		currentMAType = parseInt(this.value); // change current MA type to the selected option
-		if (maTypesArray[currentMAType].name === "d" || maTypesArray[currentMAType].name === "dDiffs") { // show/hide he dUnbiased checkbox as necessary
+		if (maTypesArray[currentMAType].name === "d" || maTypesArray[currentMAType].name === "dDiffs") { // show/hide the dUnbiased checkbox as necessary
 			$('#dUnbiased').show();
 		} else {
 			$('#dUnbiased').hide();
@@ -42,13 +42,16 @@ $(function() {
 		$('#studies').append("<div></div>"); // add the html for a new study
 		html += "Study name (optional): <input type=\"text\" value=\"\"></input>"; // optional study name field
 		for (i = 0; i < fields.length; i++) {
-			html += fields[i] + "<input type=\"number\"></input>";
+			html += " " + fields[i] + ": <input type=\"number\"></input>";
 		} // form fields
-		html += "<button class=\"remove\">remove</button>"; // remove study button
+		html += " <button class=\"remove\">Remove</button>"; // remove study button
 		$('#studies div:last').append(html); // update the container html
 		$('#studies div:last .remove').click(function() { // add the remove button behaviour
-			if ($('#studies div').length > 2) { $(this).parent().detach(); } // if 3+ studies, remove the row
-			else { alert("At least 2 studies are required."); } // otherwise display a message
+			if ($('#studies div').length > 2) { // if 3+ studies, remove the row
+				$(this).parent().detach();
+			} else { // otherwise display a message
+				alert("At least 2 studies are required.");
+			}
 		});
 
 	});
@@ -70,7 +73,9 @@ $(function() {
 			data = [], // an array to hold the data arrays
 			i = 0; // counter
 
-		for (i = 0; i < rows.length; i++) { data[i] = rows[i].split(','); } // create an array of values from each row of data
+		for (i = 0; i < rows.length; i++) { // create an array of values from each row of data
+			data[i] = rows[i].split(',');
+		}
 		if (rows.length > 1) { // if there's a minimum of 2 studies, populate the form
 			$('#studies *').detach(); // first remove all studies
 			for (i = 0; i < data.length; i++) { // loop through data array adding study rows
@@ -151,43 +156,7 @@ $(function() {
 		*/
 
 		/* ---------- */
-		/* step 5: output data to csv in an <a> */
-		/* ---------- */
-		csv = "INDIVIDUAL STUDIES\n"; // start with the individual studies
-		for (i in maData.dataSet[0]) {
-			csv += i + ",";
-		}
-		csv += "\n";
-		for (i = 0; i < maData.dataSet.length; i++) {
-			for (j in maData.dataSet[i]) {
-				csv += maData.dataSet[i][j] + ",";
-			}
-			csv += "\n";
-		}
-		csvArray = [ // build an array to more conveniently loop through the rest of the information
-			["FIXED EFFECTS MODEL", maData.fixed],
-			["RANDOM EFFECTS MODEL", maData.random],
-			["HETEROGENEITY INFORMATION", maData.heterogeneity],
-			["FIXED WEIGHTS INFORMATION", maData.fixedWeights],
-			["RANDOM WEIGHTS INFORMATION", maData.randomWeights]
-		];
-		for (i = 0; i < csvArray.length; i++) { // loop through the array and add the information
-			csv += csvArray[i][0] + "\n";
-			for (j in csvArray[i][1]) {
-				csv += j + ",";
-			}
-			csv += "\n";
-			for (j in csvArray[i][1]) {
-				csv += csvArray[i][1][j] + ",";
-			}
-			csv += "\n";
-		}
-		$('#display').append("<a id=\"download\">Download data as CSV</a>");
-		$('#download').attr("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
-		$('#download').attr("download", "myMetaAnalysis.csv");
-
-		/* ---------- */
-		/* step 6: display the forest plot */
+		/* step 5: display the forest plot */
 		/* ---------- */
 		forestPlotConfig = { // forest plot configuration
 			mountNode: '#forestPlot', // where to mount the plot
@@ -210,7 +179,7 @@ $(function() {
 		forestPlotMarkerScale = 1 / (maxWeight / maData.fixedWeights.sumWeights); // set the marker re-scale multiplier based on study with maximum weight
 		for (i = 0; i < maData.dataSet.length; i++) { // loop through studies
 			forestPlotData.push({ // add to the forest plot data variable
-				description: maData.dataSet[i].studyName || "Study " + i, // the study name
+				description: maData.dataSet[i].studyName || "Study " + (i + 1), // the study name
 				descriptionOffset: 1, // indent the study name
 				effect: {
 					effect: (maData.dataSet[i].r || maData.dataSet[i].mid), // the mean ('mid' for all types except 'r')
@@ -244,16 +213,52 @@ $(function() {
 		});
 		$('#display').append("<div id=\"forestPlot\"></div>"); // add a container for the forest plot
 		forestPlot(forestPlotConfig, forestPlotData); // display the forest plot
-		$('#display').append("<button id=\"save\">Save forest plot as PNG</button>"); // add a button to save the forest plot
-		$('#save').click(function() { // set the button's behaviour
+		$('#display').append("<div><a href=\"#\" id=\"save\">Save forest plot as PNG</a></div>"); // add a button to save the forest plot
+		$('#save').click(function() { // set the link's behaviour
 			saveSvgAsPng(d3.select('svg').node(), "myForestPlot.png"); // save the forest plot
 		});
+
+		/* ---------- */
+		/* step 6: output data to csv in an <a> */
+		/* ---------- */
+		csv = "INDIVIDUAL STUDIES\n"; // start with the individual studies
+		for (i in maData.dataSet[0]) {
+			csv += i + ",";
+		}
+		csv += "\n";
+		for (i = 0; i < maData.dataSet.length; i++) {
+			for (j in maData.dataSet[i]) {
+				csv += maData.dataSet[i][j] + ",";
+			}
+			csv += "\n";
+		}
+		csvArray = [ // build an array to more conveniently loop through the rest of the information
+			["FIXED EFFECTS MODEL", maData.fixed],
+			["RANDOM EFFECTS MODEL", maData.random],
+			["HETEROGENEITY INFORMATION", maData.heterogeneity],
+			["FIXED WEIGHTS INFORMATION", maData.fixedWeights],
+			["RANDOM WEIGHTS INFORMATION", maData.randomWeights]
+		];
+		for (i = 0; i < csvArray.length; i++) { // loop through the array and add the information
+			csv += csvArray[i][0] + "\n";
+			for (j in csvArray[i][1]) {
+				csv += j + ",";
+			}
+			csv += "\n";
+			for (j in csvArray[i][1]) {
+				csv += csvArray[i][1][j] + ",";
+			}
+			csv += "\n";
+		}
+		$('#display').append("<div><a id=\"download\">Download meta-analysis data as CSV</a></div>");
+		$('#download').attr("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
+		$('#download').attr("download", "myMetaAnalysis.csv");
 
 		/* ---------- */
 		/* step 7: display the time taken to run the meta-analysis */
 		/* ---------- */
 		timeTaken = performance.now() - timeTaken; // calculate time taken to run meta-analysis
-		$('#display').append("<div>Time taken to run analysis: " + timeTaken.toFixed(0) + "ms</div>"); // and display
+		$('#display').append("<div>(Time taken to run analysis: " + timeTaken.toFixed(0) + "ms)</div>"); // and display
 
 	});
 
@@ -277,7 +282,7 @@ function checkFormData() {
 	if ($('#studies div').length < 2) { // if fewer than 2 studies, return false
 		ok = false;
 	}
-	$('#studies div input[type="Number"]').each(function() { // loop through all the inputs
+	$('#studies div input[type="Number"]').each(function() { // loop through all the numeric inputs
 		if (!$.isNumeric($(this).val())) { // if any are not a number, return false
 			ok = false;
 		}
@@ -315,9 +320,9 @@ function getData(maType) {
 				studyData.weight = 1 / studyData.variance; // calculate study weight
 				studyData.t = (studyData.m - maData.nullMean) / studyData.se; // calculate t value
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
-				studyData.mid = studyData.m;
-				studyData.ll = studyData.mid - studyData.moe;
-				studyData.ul = studyData.mid + studyData.moe;
+				studyData.mid = studyData.m; // for later weight calculations
+				studyData.ll = studyData.mid - studyData.moe; // lower limit 95% CI
+				studyData.ul = studyData.mid + studyData.moe; // upper limit 95% CI
 				break;
 			case "meanDiffs":
 				studyData.mDiff = studyData.m2 - studyData.m1; // calculate mean difference
@@ -329,22 +334,22 @@ function getData(maType) {
 				studyData.weight = 1 / studyData.variance; // calculate (fixed) study weight
 				studyData.t = (studyData.mDiff - maData.nullMean) / Math.sqrt(studyData.variance); // calculate t value
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
-				studyData.mid = studyData.mDiff;
-				studyData.ll = studyData.mid - studyData.moe;
-				studyData.ul = studyData.mid + studyData.moe;
+				studyData.mid = studyData.mDiff; // for later weight calculation
+				studyData.ll = studyData.mid - studyData.moe; // lower limit 95% CI
+				studyData.ul = studyData.mid + studyData.moe; // upper limit 95% CI
 				break;
 			case "meanPairedDiffs":
 				studyData.mDiff = studyData.m2 - studyData.m1; // calculate mean difference
 				studyData.df = studyData.n - 1; // degrees of freedom
 				studyData.t_crit = jStat.studentt.inv((1 - (maData.alpha / 2)), studyData.df); // calculate critical t value
 				studyData.se = Math.abs(studyData.mDiff - maData.nullMean) * (1 / studyData.t); // standard error calculated from known paired t value
-				studyData.variance = Math.pow(studyData.se, 2);
+				studyData.variance = Math.pow(studyData.se, 2); // variance
 				studyData.moe = studyData.t_crit * studyData.se; // calculate margin of error
 				studyData.weight = 1 / studyData.variance; // calculate (fixed) study weight
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
-				studyData.mid = studyData.mDiff;
-				studyData.ll = studyData.mid - studyData.moe;
-				studyData.ul = studyData.mid + studyData.moe;
+				studyData.mid = studyData.mDiff; // for later weight calculation
+				studyData.ll = studyData.mid - studyData.moe; // lower limit 95% CI
+				studyData.ul = studyData.mid + studyData.moe; // upper limit 95% CI
 				break;
 			case "d":
 				studyData.sqrtN = Math.sqrt(1 / studyData.n); // square root of (1/N)
@@ -359,17 +364,17 @@ function getData(maType) {
 				if (studyData.ncpU === undefined) { studyData.ncpU = studyData.ncp + studyData.t_crit; } // workaround for nonCentralT failing at high Ns
 				studyData.ll = studyData.ncpL * studyData.sqrtN; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
 				studyData.ul = studyData.ncpU * studyData.sqrtN; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
-				studyData.variance = (1 + (Math.pow(studyData.d,2)) / 2) / studyData.n; // calculate d variance
+				studyData.variance = (1 + (Math.pow(studyData.d, 2)) / 2) / studyData.n; // calculate d variance
 				studyData.weight = 1 / studyData.variance; // calculate study weight when using d
 				if ($('#dUnbiased input').prop("checked")) { // use dUnbiased values
 					studyData.dMod = Math.exp(jStat.gammaln(studyData.df / 2)) / (Math.sqrt(studyData.df / 2) * Math.exp(jStat.gammaln((studyData.df / 2) - 0.5))); // modifier for unbiased d
-					studyData.variance = Math.pow(studyData.dMod,2) * (1 + (Math.pow(studyData.d,2)) / 2) / studyData.n;// changed variance to unbiased d variance
+					studyData.variance = Math.pow(studyData.dMod, 2) * (1 + (Math.pow(studyData.d, 2)) / 2) / studyData.n;// changed variance to unbiased d variance
 					studyData.d = studyData.d * studyData.dMod; // change d to unbiased d
 					studyData.weight = 1 / studyData.variance; // change weight to unbiased d weight
 				}
 				studyData.t = (studyData.d - maData.nullMean) / Math.sqrt(studyData.variance); // calculate t
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
-				studyData.mid = studyData.d;
+				studyData.mid = studyData.d; // for later weight calculation
 				break;
 			case "dDiffs":
 				studyData.sqrtN12 = Math.sqrt(1 / studyData.n1 + 1 / studyData.n2); // square root of (1/N1 + 1/N2)
@@ -384,17 +389,17 @@ function getData(maType) {
 				if (studyData.ncpU === undefined) { studyData.ncpU = studyData.ncp + studyData.t_crit; } // workaround for nonCentralT failing at high Ns
 				studyData.ll = studyData.ncpL * studyData.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
 				studyData.ul = studyData.ncpU * studyData.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
-				studyData.variance = (studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (Math.pow(studyData.d,2)) / (2 * (studyData.n1 + studyData.n2)); // calculate d variance
+				studyData.variance = (studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (Math.pow(studyData.d, 2)) / (2 * (studyData.n1 + studyData.n2)); // calculate d variance
 				studyData.weight = 1 / studyData.variance; // calculate study weight when using d
 				if ($('#dUnbiased input').prop("checked")) { // use dUnbiased values
 					studyData.dMod = Math.exp(jStat.gammaln(studyData.df / 2)) / (Math.sqrt(studyData.df / 2) * Math.exp(jStat.gammaln((studyData.df / 2) - 0.5))); // modifier for unbiased d
-					studyData.variance = Math.pow(studyData.dMod,2) * ((studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (Math.pow(studyData.d,2)) / (2 * (studyData.n1 + studyData.n2))); // change variance to unbiased d variance
+					studyData.variance = Math.pow(studyData.dMod, 2) * ((studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (Math.pow(studyData.d, 2)) / (2 * (studyData.n1 + studyData.n2))); // change variance to unbiased d variance
 					studyData.d = studyData.d * studyData.dMod; // change d to unbiased d
 					studyData.weight = 1 / studyData.variance; // change weight to unbiased d weight
 				}
-				studyData.t = (studyData.d - maData.nullMean) / Math.sqrt((studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (Math.pow(studyData.d,2)) / (2 * (studyData.n1 + studyData.n2))); // calculate t
+				studyData.t = (studyData.d - maData.nullMean) / Math.sqrt((studyData.n1 + studyData.n2) / (studyData.n1 * studyData.n2) + (Math.pow(studyData.d, 2)) / (2 * (studyData.n1 + studyData.n2))); // calculate t
 				studyData.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(studyData.t), studyData.df))); // calculate p value
-				studyData.mid = studyData.d;
+				studyData.mid = studyData.d; // for later weight calculation
 				break;
 			case "r":
 				studyData.rZ = 0.5 * Math.log((1 + studyData.r) / (1 - studyData.r)); // z for r
@@ -406,9 +411,9 @@ function getData(maType) {
 				studyData.rUL = (Math.exp(2 * studyData.zUL) - 1) / (Math.exp(2 * studyData.zUL) + 1); // r UL
 				studyData.weight = 1 / studyData.varZ; // weight
 				studyData.p = 2 * (1 - jStat.normal.cdf(Math.abs(studyData.z), 0, 1)); // p
-				studyData.mid = studyData.rZ;
-				studyData.ll = studyData.rLL;
-				studyData.ul = studyData.rUL;
+				studyData.mid = studyData.rZ; // for later weight calculation
+				studyData.ll = studyData.rLL; // lower limit 95% CI
+				studyData.ul = studyData.rUL; // upper limit 95% CI
 				break;
 			default:
 				break;
@@ -436,15 +441,15 @@ function nonCentralT(t, ncp, df) {
 	} else {
 		nct = jStat.normal.cdf(0 * tOverSqrtDF - ncp, 0, 1) * Math.exp(-0.5 * 0 * 0);
 	}
-	nct += 4 * jStat.normal.cdf(pointSep * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSep, df2) * Math.exp(-0.5 * pointSep * pointSep); // add second term with multiplier of 4
+	nct += 4 * jStat.normal.cdf(pointSep * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSep, df2) * Math.exp(-0.5 * Math.pow(pointSep, 2)); // add second term with multiplier of 4
 	for (i = 1; i < 50; i++) { // loop to add 98 values
 		pointSepTmp = 2 * i * pointSep;
-		nct += 2 * jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
+		nct += 2 * jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * Math.pow(pointSepTmp, 2));
 		pointSepTmp += pointSep;
-		nct += 4 * jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
+		nct += 4 * jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * Math.pow(pointSepTmp, 2));
 	}
 	pointSepTmp += pointSep; // add last term
-	nct += jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * pointSepTmp * pointSepTmp);
+	nct += jStat.normal.cdf(pointSepTmp * tOverSqrtDF - ncp, 0, 1) * Math.pow(pointSepTmp, df2) * Math.exp(-0.5 * Math.pow(pointSepTmp, 2));
 	nct *= constant; // multiply by the constant
 
 	return nct;
@@ -465,8 +470,8 @@ function getFixedWeightSums(dataset) {
 	for (i = 0; i < dataset.length; i++) { // for each study, add the weight measures, resulting in summed weights
 		fixedWeights.sumWeights += dataset[i].weight;
 		fixedWeights.sumWeightsTimesMeans += (dataset[i].weight * dataset[i].mid);
-		fixedWeights.sumWeightsTimesSquaredMeans += (dataset[i].weight * (dataset[i].mid * dataset[i].mid));
-		fixedWeights.sumSquaredWeights += (dataset[i].weight * dataset[i].weight);
+		fixedWeights.sumWeightsTimesSquaredMeans += dataset[i].weight * Math.pow(dataset[i].mid, 2);
+		fixedWeights.sumSquaredWeights += Math.pow(dataset[i].weight, 2);
 	}
 
     return fixedWeights;
@@ -478,7 +483,7 @@ function getHeterogeneity(weights, df, alpha) {
 
 	var het = {}; // heterogeneity object to return
 
-    het.q = weights.sumWeightsTimesSquaredMeans - (Math.pow(weights.sumWeightsTimesMeans,2) / weights.sumWeights); // Q
+    het.q = weights.sumWeightsTimesSquaredMeans - (Math.pow(weights.sumWeightsTimesMeans, 2) / weights.sumWeights); // Q
     het.c = weights.sumWeights - (weights.sumSquaredWeights / weights.sumWeights); // C
     het.tSq = (het.c === 0) ? 0 : (Math.max(0, ((het.q - df) / het.c ))); // Tau squared (minimum of 0)
     het.t = Math.sqrt(het.tSq); // Tau
@@ -488,8 +493,8 @@ function getHeterogeneity(weights, df, alpha) {
     het.b = (het.q > (df + 1)) ? het.b1 : het.b2; // B
     het.l = Math.exp((0.5 * Math.log(het.q / df)) - (jStat.normal.inv((1 - (alpha / 2)), 0, 1) * het.b)); // L
     het.u = Math.exp((0.5 * Math.log(het.q / df)) + (jStat.normal.inv((1 - (alpha / 2)), 0, 1) * het.b)); // U
-    het.lltSq = Math.max(0, ((df * (Math.pow(het.l,2) - 1))) / het.c); // Lower 95% CI for Tau squared (minimum of 0)
-    het.ultSq = Math.max(0, ((df * (Math.pow(het.u,2) - 1))) / het.c); // Upper 95% CI for Tau squared (minimum of 0)
+    het.lltSq = Math.max(0, ((df * (Math.pow(het.l, 2) - 1))) / het.c); // Lower 95% CI for Tau squared (minimum of 0)
+    het.ultSq = Math.max(0, ((df * (Math.pow(het.u, 2) - 1))) / het.c); // Upper 95% CI for Tau squared (minimum of 0)
     het.llt = Math.sqrt(het.lltSq); // Lower 95% CI for Tau
     het.ult = Math.sqrt(het.ultSq); // Upper 95% CI for Tau
     het.p = 1 - jStat.chisquare.cdf(het.q, df); // p value

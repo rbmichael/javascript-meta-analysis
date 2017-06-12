@@ -1,2 +1,4 @@
-body { font-family: arial; font-size: 12pt; background:url(../img/background.png); }
-input { width:50px; }
+body { font-family: Merriweather, Arial; font-size: 12pt; background:url(../img/background.png); }
+input[type="number"] { width:50px; }
+input[type="text"] { width:100px; }
+div { padding: 3px; }

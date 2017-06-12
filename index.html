@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<title>JavaScript Meta-Analysis</title>
+		<link href="https://fonts.googleapis.com/css?family=Merriweather" rel="stylesheet">
 		<link rel="stylesheet" type="text/css" href="./css/style.css">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.6.0/jstat.min.js" integrity="sha256-YDpvU2WSVH8p/EEd08TXCj6SQryOim28OkUZ4yVUmu4=" crossorigin="anonymous"></script>
 		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
@@ -12,31 +13,34 @@
   		<script type="text/javascript" src="./js/jsMA.js"></script>
 	</head>
 	<body>
-		JavaScript Meta-Analysis<br>
-		This software makes use of the following technologies:
-		<a href="https://github.com/jstat/jstat">jStat</a>,
-		<a href="https://jquery.com">jQuery</a>,
-		<a href="https://d3js.org">d3.js</a>,
-		<a href="https://github.com/exupero/saveSvgAsPng">saveSvgAsPng</a>,
-		<a href="https://github.com/legaultmarc/forestplot">forestPlot</a>,
-		<a href="https://github.com/adam-hanna/goalSeek.js">goalSeek.js</a><br>
-		In addition, much of the inspiration for the software comes from Exploratory Software for Confidence Intervals (<a href="http://thenewstatistics.com/itns/esci/">ESCI</a>)<br>
-		<br>Select a type of meta-analysis: <select id="maSelector"></select>
-		<br>Select a Confidence Interval:
-		<select id="ci">
-			<option value="90">90%</option>
-			<option value="95" selected>95%</option>
-			<option value="99">99%</option>
-		</select>
-		<br>Enter a null-hypothesis mean (default 0): <input type="number" value="0" id="null"></input>
-		<br>Enter an effect size name (default "Effect"): <input type="text" value="Effect" id="esName"></input>
-		<br>Enter values below, OR paste csv values here then click "Update".
-		<br><textarea id="csv"></textarea>
-		<button id="updateCSV">Update</button><br>
-		<button id="add">Add a study</button>
-		<button id="removeAll">Remove all studies</button>
-		<button id="run" disabled>Run meta-analysis</button><br>
-		<div id="dUnbiased">Use unbiased d? <input type="checkbox"></div>
+		<h1>JavaScript Meta-Analysis</h1>
+		<div>Inspired by <a href="http://thenewstatistics.com/itns/esci/">Exploratory Software for Confidence Intervals (ESCI)</a>.</div>
+		<div>Makes use of the following: <a href="https://github.com/jstat/jstat">jStat</a>, <a href="https://jquery.com">jQuery</a>, <a href="https://d3js.org">d3.js</a>, <a href="https://github.com/exupero/saveSvgAsPng">saveSvgAsPng</a>, <a href="https://github.com/legaultmarc/forestplot">forestPlot</a>, <a href="https://github.com/adam-hanna/goalSeek.js">goalSeek.js</a></div>
+		<div>
+			<h2>Meta-Analysis</h2>
+			<div>Step 1. Choose an effect size format: <select id="maSelector"></select></div>
+			<div>
+				Step 2. Select a Confidence Interval (default 95%):
+				<select id="ci">
+					<option value="90">90%</option>
+					<option value="95" selected>95%</option>
+					<option value="99">99%</option>
+				</select>
+			</div>
+			<div>Step 3. Enter a null-hypothesis mean (default 0): <input type="number" value="0" id="null"></input></div>
+			<div>Step 4. Enter an effect size name (default "Effect"): <input type="text" value="Effect" id="esName"></input></div>
+			<div>
+				Step 5. Enter values using the form fields below then click "Run meta-analysis", <strong>OR</strong> paste CSV values here and click "Update" then "Run meta-analysis".<br>
+				<textarea id="csv"></textarea>
+				<button id="updateCSV">Update</button>
+			</div>
+			<div>
+				<button id="add">Add a study</button>
+				<button id="removeAll">Remove all studies</button>
+				<button id="run" disabled>Run meta-analysis</button>
+			</div>
+			<div id="dUnbiased">Use unbiased d? (recommended)<input type="checkbox"></div>
+		</div>
 		<div id="studies"></div>
 		<div id="display"></div>
 	</body>
