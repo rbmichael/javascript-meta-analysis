@@ -1,18 +1,59 @@
 // run when DOM is loaded
 $(function() {
 
+	/* ---------- */
+	// declare variables
+	/* ---------- */
 	var maTypesArray = [], // array to hold the types of meta-analysis available
 		currentMAType = 0, // current meta-analysis type; defaults to Single means meta-analysis
 		i = 0, // counter
 		j = 0; // another counter
 
+	/* ---------- */
  	// build an array of objects of the types of meta-analysis available
- 	maTypesArray.push({ name:"means", description:"Single means", dataFields:["M","SD","N"] });
-	maTypesArray.push({ name:"meanDiffs", description: "Difference between two independent group means", dataFields:["M1","SD1","N1","M2","SD2","N2"] });
-	maTypesArray.push({ name:"meanPairedDiffs", description: "Difference between two dependent means", dataFields:["M1","SD1","M2","SD2","N","t"] });
-	maTypesArray.push({ name:"d", description:"Cohen's d for a single group", dataFields:["d","N"] });
-	maTypesArray.push({ name:"dDiffs", description:"Cohen's d for two independent groups", dataFields:["d","N1","N2"] });
-	maTypesArray.push({ name:"r", description:"Pearson's r correlations", dataFields:["r","N"] });
+ 	// dataRules is an array of values relating to each of the dataFields, and specifies requirements for that field
+ 	//	ALL must be numbers
+ 	//	0 = no extra rules
+ 	//	1 = must be > 0,
+ 	//	2 = must be a whole number and must be >= 2,
+ 	//	3 = must be -1 < x < 1
+	/* ---------- */
+ 	maTypesArray.push({
+ 		name: "means",
+ 		description: "Single means",
+ 		dataFields: ["M", "SD", "N"],
+ 		dataRules: [0, 1, 2]
+ 	});
+	maTypesArray.push({
+		name: "meanDiffs",
+		description: "Difference between two independent group means",
+		dataFields: ["M1", "SD1", "N1", "M2", "SD2", "N2"],
+		dataRules: [0, 1, 2, 0, 1, 2]
+	});
+	maTypesArray.push({
+		name: "meanPairedDiffs",
+		description: "Difference between two dependent means",
+		dataFields: ["M1", "SD1", "M2", "SD2", "N", "t"],
+		dataRules: [0, 1, 0, 1, 2, 0]
+	});
+	maTypesArray.push({
+		name:"d",
+		description: "Cohen's d for a single group",
+		dataFields: ["d", "N"],
+		dataRules:[0, 2]
+	});
+	maTypesArray.push({
+		name: "dDiffs",
+		description: "Cohen's d for two independent groups",
+		dataFields: ["d", "N1", "N2"],
+		dataRules: [0, 2, 2]
+	});
+	maTypesArray.push({
+		name:"r",
+		description: "Pearson's r correlations",
+		dataFields: ["r", "N"],
+		dataRules:[3, 2]
+	});
 
 	// populate the meta-analysis <select> element (for choosing a type of meta-analysis) from maTypesArray
 	for (i = 0; i < maTypesArray.length; i++) {
@@ -22,7 +63,7 @@ $(function() {
 	// set the meta-analysis type selector's change behaviour (remove studies and setup new form fields)
 	$('#maSelector').change(function() {
 
-		currentMAType = parseInt(this.value); // change current MA type to the selected option
+		currentMAType = parseInt($(this).val()); // change current MA type to the selected option
 		if (maTypesArray[currentMAType].name === "d" || maTypesArray[currentMAType].name === "dDiffs") { // show/hide the dUnbiased checkbox as necessary
 			$('#dUnbiased').show();
 		} else {
@@ -41,9 +82,9 @@ $(function() {
 
 		$('#studies').append("<div></div>"); // add the html for a new study
 		html += "Study name (optional): <input type=\"text\" value=\"\"></input>"; // optional study name field
-		for (i = 0; i < fields.length; i++) {
+		for (i = 0; i < fields.length; i++) { // form fields
 			html += " " + fields[i] + ": <input type=\"number\"></input>";
-		} // form fields
+		}
 		html += " <button class=\"remove\">Remove</button>"; // remove study button
 		$('#studies div:last').append(html); // update the container html
 		$('#studies div:last .remove').click(function() { // add the remove button behaviour
@@ -61,7 +102,8 @@ $(function() {
 
 		$('#display *').detach(); // clear the display
 		$('#studies *').detach(); // remove all studies
-		$('#add').click(); $('#add').click(); // add the 2 minimum study rows
+		$('#add').click(); // add the 2 minimum study rows
+		$('#add').click();
 
 	});
 
@@ -81,7 +123,12 @@ $(function() {
 			for (i = 0; i < data.length; i++) { // loop through data array adding study rows
 				$('#add').click(); // add a row
 				$('#studies div:last input').each(function(index) { // populate each input field with data
-					$(this).val(data[i][index]);
+					if (index === 0) { // if we're on the study name field
+						if ($.isNumeric(data[i][0])) { // is the data for that field a number? if so...
+							data[i].unshift(""); // push a blank text field to the front of the array
+						}
+					}
+					$(this).val(data[i][index]); // populate
 				});
 			}
 		} else {  // if < 2 studies, send an error
@@ -102,14 +149,17 @@ $(function() {
 			forestPlotConfig = {}, // for holding forest plot config information
 			forestPlotData = [], // for holding forest plot data
 			forestPlotMarkerScale = 0, // for re-scaling forest plot marker sizes
-			maxWeight = 0; // for holding the maximum study weight
+			maxWeight = 0, // for holding the maximum study weight
+			errorMsg = ""; // for holding data input error messages
 
 		/* ---------- */
-		/* step 1: check data entry, proceed if OK, else show an error and stop */
+		/* step 1: check data entry, proceed if OK, else show errors and stop */
 		/* ---------- */
-		if (!checkFormData()) {
-			alert("Error with data entry; check valid numbers have been entered.");
-			return;
+		errorMsg = checkFormData(maTypesArray[currentMAType].dataRules); // checkFormData returns "" if input meets all rules, otherwise returns error message(s)
+		$('#errors *').detach(); // clear the error display
+		if (errorMsg !== "") {
+			$('#errors').append("<div>" + errorMsg + "</div>"); // show the error(s)
+			return; // stop
 		}
 
 		/* ---------- */
@@ -253,21 +303,42 @@ $(function() {
 	// enable the 'run' button
 	$('#run').prop('disabled', false);
 
-	// data entry check -- needs extending, barebones right now
-	function checkFormData() {
+	// data entry check
+	function checkFormData(rules) {
 
-		var ok = true; // boolean
+		var errorMsg = ""; // error message to return
 	
-		if ($('#studies div').length < 2) { // if fewer than 2 studies, return false
-			ok = false;
-		}
-		$('#studies div input[type="Number"]').each(function() { // loop through all the numeric inputs
-			if (!$.isNumeric($(this).val())) { // if any are not a number, return false
-				ok = false;
-			}
+		$('#studies div').each(function(i) { // loop through each study
+			$(this).children("input[type='number']").each(function(j) { // loop through all numeric inputs
+				if (!$.isNumeric($(this).val())) { // if input is not a number (trumps remaining data checks)
+					errorMsg += "Mandatory field " + (j + 1) + " in Study row " + (i + 1) + " is not a number.<br>";
+				} else {
+					switch(rules[j]) { // check if value meets the rules for that field
+						case 0:
+							break;
+						case 1:
+							if ($(this).val() <= 0) {
+								errorMsg += "Mandatory field " + (j + 1) + " in Study row " + (i + 1) + " must be greater than zero.<br>";
+							}
+							break;
+						case 2:
+							if (($(this).val() % 1 !== 0) || ($(this).val() < 2)) {
+								errorMsg += "Mandatory field " + (j + 1) + " in Study row " + (i + 1) + " must be a whole number and must be greater than or equal to two.<br>";
+							}
+							break;
+						case 3:
+							if (($(this).val() <= -1) || ($(this).val() >= 1)) {
+								errorMsg += "Mandatory field " + (j + 1) + " in Study row " + (i + 1) + " must be between -1 and 1.<br>";
+							}
+							break;
+						default:
+							break;
+					}
+				}
+			});
 		});
-	
-		return ok; // passed the checks, return true
+
+		return errorMsg;
 
 	}
 
