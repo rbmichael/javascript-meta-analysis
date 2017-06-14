@@ -1,4 +1,91 @@
-body { font-family: Merriweather, Arial; font-size: 12pt; background:url(../img/background.png); }
-input[type="number"] { width:50px; }
-input[type="text"] { width:100px; }
-div { padding: 3px; }
+body {
+	font-family: Merriweather, Arial;
+	font-size: 12pt;
+	background-color: #FFF;
+	/*min-width: 1020px;*/
+	margin: 0px;
+}
+a {
+	color: #0366D6;
+	text-decoration: none;
+}
+a:hover {
+	text-decoration: underline;
+}
+input[type="number"] {
+	width: 50px;
+}
+input[type="text"] {
+	width: 100px;
+}
+input, textarea {
+	font-family: Merriweather, Arial;
+	font-size: 10pt;
+}
+button {
+	font-family: Merriweather, Arial;
+	font-size: 10pt;
+	margin: 3px 0px;
+	background-color: #EFF2F5;
+}
+button:hover {
+	background-color: #E4E8EC;
+}
+button:focus {
+	outline: none;
+}
+select {
+	font-family: Merriweather, Arial;
+	font-size: 10pt;
+	background-color: #EFF2F5;
+	color: #000;
+}
+select:hover {
+	background-color: #E4E8EC;
+}
+select:focus {
+	outline: none;
+}
+.header {
+	padding: 15px;
+	margin-right: auto;
+	margin-left: auto;
+	background-color: #2B2D2F;
+	color: rgba(255, 255, 255, 0.80);
+}
+.header a {
+	color: rgba(255, 255, 255, 0.80);
+	text-decoration: none;
+}
+.header a:hover {
+	color: rgba(255, 255, 255, 1.00);
+}
+.menu ul {
+	display: table;
+	table-layout: fixed;
+	margin: 10px;
+	padding: 0px;
+	border: 1px solid #000;
+}
+.menu ul li {
+	display: table-cell;
+	padding: 10px;
+	background-color: #F8F8F4;
+}
+.menu p {
+	margin: 0px;
+}
+.data {
+	padding: 15px;
+	padding-top: 0px;
+	margin-right: auto;
+	margin-left: auto;
+}
+.footer {
+	padding: 15px;
+	margin-right: auto;
+	margin-left: auto;
+	margin-top: 30px;
+	color: rgba(0, 0, 0, 0.8);
+	border-top: 1px solid #CCC;
+}

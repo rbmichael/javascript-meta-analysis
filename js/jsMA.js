@@ -81,7 +81,8 @@ $(function() {
 			i = 0; // counter
 
 		$('#studies').append("<div></div>"); // add the html for a new study
-		html += "Study name (optional): <input type=\"text\" value=\"\"></input>"; // optional study name field
+
+		html += "Study name: <input type=\"text\" value=\"\"></input>"; // optional study name field
 		for (i = 0; i < fields.length; i++) { // form fields
 			html += " " + fields[i] + ": <input type=\"number\"></input>";
 		}
@@ -101,6 +102,7 @@ $(function() {
 	$('#removeAll').click(function() {
 
 		$('#display *').detach(); // clear the display
+		$('#errors *').detach(); // clear the errors
 		$('#studies *').detach(); // remove all studies
 		$('#add').click(); // add the 2 minimum study rows
 		$('#add').click();
@@ -250,7 +252,7 @@ $(function() {
 		});
 
 		/* ---------- */
-		/* step 6: output data to csv in an <a> */
+		/* step 5: output data to csv in an <a> */
 		/* ---------- */
 		csv = "INDIVIDUAL STUDIES\n"; // start with the individual studies
 		for (i in maData.dataSet[0]) {
@@ -286,7 +288,7 @@ $(function() {
 		$('#download').attr("download", "myMetaAnalysis.csv");
 
 		/* ---------- */
-		/* step 7: display the time taken to run the meta-analysis */
+		/* step 6: display the time taken to run the meta-analysis */
 		/* ---------- */
 		timeTaken = performance.now() - timeTaken; // calculate time taken to run meta-analysis
 		$('#display').append("<div>(Time taken to run analysis: " + timeTaken.toFixed(0) + "ms)</div>"); // and display

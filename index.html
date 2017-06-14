@@ -13,36 +13,51 @@
   		<script src="./js/jsMA.js"></script>
 	</head>
 	<body>
-		<h1>JavaScript Meta-Analysis</h1>
-		<div>Inspired by <a href="http://thenewstatistics.com/itns/esci/">Exploratory Software for Confidence Intervals (ESCI)</a>.</div>
-		<div>Makes use of the following: <a href="https://jquery.com">jQuery</a>, <a href="https://d3js.org">d3.js</a>, <a href="https://github.com/jstat/jstat">jStat</a>, <a href="https://github.com/exupero/saveSvgAsPng">saveSvgAsPng</a>, <a href="https://github.com/legaultmarc/forestplot">forestPlot</a>, <a href="https://github.com/adam-hanna/goalSeek.js">goalSeek.js</a></div>
-		<div>
-			<h2>Meta-Analysis</h2>
-			<div>Step 1. Choose an effect size format: <select id="maSelector"></select></div>
-			<div>
-				Step 2. Select a Confidence Interval (default 95%):
-				<select id="ci">
-					<option value="90">90%</option>
-					<option value="95" selected>95%</option>
-					<option value="99">99%</option>
-				</select>
-			</div>
-			<div>Step 3. Enter a null-hypothesis mean (default 0): <input type="number" value="0" id="null"></input></div>
-			<div>Step 4. Enter an effect size name (default "Effect"): <input type="text" value="Effect" id="esName"></input></div>
-			<div>
-				Step 5. Enter values using the form fields below then click "Run meta-analysis", <strong>OR</strong> paste CSV values here and click "Update" then "Run meta-analysis".<br>
-				<textarea id="csv"></textarea>
-				<button id="updateCSV">Update</button>
-			</div>
+		<div class="header">
+			<a href="https://rbmichael.github.io/javascript-meta-analysis/">JavaScript Meta-Analysis</a> | <a href="https://github.com/rbmichael/javascript-meta-analysis">GitHub page</a>
+		</div>
+		<div class="menu">
+			<ul>
+				<li>
+					<p>Effect size format</p>
+					<select id="maSelector"></select>
+					<p>&nbsp;</p>
+					<p>Effect size name</p>
+					<input type="text" value="Effect" id="esName"></input>
+				</li>
+				<li>
+					<p>Confidence Interval</p>
+					<select id="ci">
+						<option value="90">90%</option>
+						<option value="95" selected>95%</option>
+						<option value="99">99%</option>
+					</select>
+					<p>&nbsp;</p>
+					<p>Null hypothesis value</p>
+					<input type="number" value="0" id="null"></input>
+				</li>
+			</ul>
+		</div>
+		<div class="data">
+			<p>DATA ENTRY (Study names are optional):</p>
+			<div id="errors"></div>
 			<div>
 				<button id="add">Add a study</button>
 				<button id="removeAll">Remove all studies</button>
 				<button id="run" disabled>Run meta-analysis</button>
 			</div>
 			<div id="dUnbiased">Use unbiased d? (recommended)<input type="checkbox"></div>
+			<div id="studies"></div>
+			<div>
+				<p>Alternative CSV input:</p>
+				<textarea id="csv"></textarea><br>
+				<button id="updateCSV">Update</button>
+			</div>
+			<div id="display"></div>
 		</div>
-		<div id="errors"></div>
-		<div id="studies"></div>
-		<div id="display"></div>
+		<div class="footer">
+			<p>Inspired by <a href="http://thenewstatistics.com/itns/esci/">Exploratory Software for Confidence Intervals (ESCI)</a>.</p>
+			<p>Makes use of the following: <a href="https://jquery.com">jQuery</a>, <a href="https://d3js.org">d3.js</a>, <a href="https://github.com/jstat/jstat">jStat</a>, <a href="https://github.com/exupero/saveSvgAsPng">saveSvgAsPng</a>, <a href="https://github.com/legaultmarc/forestplot">forestPlot</a>, <a href="https://github.com/adam-hanna/goalSeek.js">goalSeek.js</a></p>
+		</div>
 	</body>
 </html>
