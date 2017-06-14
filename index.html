@@ -21,9 +21,6 @@
 				<li>
 					<p>Effect size format</p>
 					<select id="maSelector"></select>
-					<p>&nbsp;</p>
-					<p>Effect size name</p>
-					<input type="text" value="Effect" id="esName"></input>
 				</li>
 				<li>
 					<p>Confidence Interval</p>
@@ -32,24 +29,29 @@
 						<option value="95" selected>95%</option>
 						<option value="99">99%</option>
 					</select>
-					<p>&nbsp;</p>
+				</li>
+				<li>
+					<p>Effect size name</p>
+					<input type="text" value="Effect" id="esName"></input>
+				</li>
+				<li>
 					<p>Null hypothesis value</p>
 					<input type="number" value="0" id="null"></input>
 				</li>
 			</ul>
 		</div>
 		<div class="data">
-			<p>DATA ENTRY (Study names are optional):</p>
+			<div>DATA ENTRY (Study names are optional):</div>
 			<div id="errors"></div>
 			<div>
 				<button id="add">Add a study</button>
 				<button id="removeAll">Remove all studies</button>
 				<button id="run" disabled>Run meta-analysis</button>
 			</div>
-			<div id="dUnbiased">Use unbiased d? (recommended)<input type="checkbox"></div>
+			<div id="dUnbiased">Calculate and use unbiased d? (recommended)<input type="checkbox"></div>
 			<div id="studies"></div>
 			<div>
-				<p>Alternative CSV input:</p>
+				<div>Alternative CSV input:</div>
 				<textarea id="csv"></textarea><br>
 				<button id="updateCSV">Update</button>
 			</div>

@@ -1,8 +1,9 @@
-body {
+html {
 	font-family: Merriweather, Arial;
 	font-size: 12pt;
+}
+body {
 	background-color: #FFF;
-	/*min-width: 1020px;*/
 	margin: 0px;
 }
 a {
@@ -48,8 +49,6 @@ select:focus {
 }
 .header {
 	padding: 15px;
-	margin-right: auto;
-	margin-left: auto;
 	background-color: #2B2D2F;
 	color: rgba(255, 255, 255, 0.80);
 }
@@ -60,31 +59,29 @@ select:focus {
 .header a:hover {
 	color: rgba(255, 255, 255, 1.00);
 }
+.menu {
+	padding: 15px;
+	background-color: #F8F8F4;
+	border-bottom: 1px solid #CCC;
+}
 .menu ul {
 	display: table;
 	table-layout: fixed;
-	margin: 10px;
+	margin: 0px;
 	padding: 0px;
-	border: 1px solid #000;
 }
 .menu ul li {
 	display: table-cell;
-	padding: 10px;
-	background-color: #F8F8F4;
+	padding: 0px 15px 0px 0px;
 }
 .menu p {
 	margin: 0px;
 }
 .data {
 	padding: 15px;
-	padding-top: 0px;
-	margin-right: auto;
-	margin-left: auto;
 }
 .footer {
 	padding: 15px;
-	margin-right: auto;
-	margin-left: auto;
 	margin-top: 30px;
 	color: rgba(0, 0, 0, 0.8);
 	border-top: 1px solid #CCC;
