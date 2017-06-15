@@ -154,6 +154,17 @@ $(function() {
 			maxWeight = 0, // for holding the maximum study weight
 			errorMsg = ""; // for holding data input error messages
 
+// testing BOOKMARK
+		var dataArray = [];
+		$('#studies div').each(function(i) { // loop through each study
+			dataArray[i] = [];
+			$(this).children('input[type="number"]').each(function(j) { // loop through the entered data
+				dataArray[i][j] = Number($(this).val());
+			});
+		});
+		console.log(metaAnalysis({},dataArray));
+// testing BOOKMARK
+
 		/* ---------- */
 		/* step 1: check data entry, proceed if OK, else show errors and stop */
 		/* ---------- */

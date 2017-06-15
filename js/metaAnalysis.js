@@ -319,8 +319,8 @@
 			NUMBER: nullMean; Null hypothesis value (default 0)
 		},
 		ARRAY: Dataset of studies (min length 2) [
-			OBJECT: Individual study data {
-				Variables (all of type NUMBER) named according to maType above
+			ARRAY: Individual study data {
+				NUMBERs (according to maType above, e.g. "means" requires M, SD, N: [10,2,30])
 			}
 		]
 
@@ -338,9 +338,8 @@
 					NUMBER: weightTimesMean; weight * m
 					NUMBER: weightTimesSquaredMean; weight * m^2
 					NUMBER: weightSquared; weight^2
-					NUMBER: varianceRandom; Random model variance (weight + Tau^2)
-					NUMBER: weightRandom; Random model weight (1 / varianceRandom)
-					NUMBER: weightRandomTimesMean; weightRandom * m
+					NUMBER: randomVariance; Random model variance (weight + Tau^2)
+					NUMBER: randomWeight; Random model weight (1 / varianceRandom)
 				}
 			],
 			OBJECT: weightSums; Sums of study weights {
@@ -371,7 +370,7 @@
 				NUMBER: llt; Lower Limit CI Tau
 				NUMBER: ult; Upper Limit CI Tau
 				NUMBER: p; p value for Q
-				NUMBER: ratio; Ratio of random / fixed model CI lengths
+				NUMBER: modelRatio; Ratio of random / fixed model CI lengths
 			}
 			OBJECT: fixed, random {
 				NUMBER: mean;
