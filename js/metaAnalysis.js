@@ -1,92 +1,8 @@
-/*
-	JavaScript Meta-Analysis
-
-	Required arguments:
-		OBJECT: Configuration {
-			STRING: maType; Type of analysis (default "means"),
-				SHOULD BE ONE OF THE FOLLOWING:
-				"means" - For single means. Requires M, SD, N,
-				"meanDiffs" - For difference between two independent group means. Requires M1, SD1, N1, M2, SD2, N2,
-				"meanPairedDiffs" - For difference between two dependent means. Requires M1, SD1, M2, SD3, N, paired t value,
-				"d" - Cohen's d for a single group. Requires d, N,
-				"dDiffs" - Cohen's d for the difference between two independent groups. Requires d, N1, N2,
-				"r" - Pearson's r correlations. Requires r, N
-			STRING: esName; Effect size name (default "Effect"),
-			NUMBER: ci; Confidence interval (default 95),
-			NUMBER: nullMean; Null hypothesis value (default 0)
-		},
-		ARRAY: Dataset of studies (min length 2) [
-			OBJECT: Individual study data {
-				Variables (all of type NUMBER) named according to maType above
-			}
-		]
-
-	Returns:
-		OBJECT: ma; Meta-analysis data {
-			ARRAY: dataSet; Dataset of studies [
-				OBJECT: Individual study data {
-					NUMBER: m; Point estimate (mean),
-					NUMBER: ll; Lower limit CI,
-					NUMBER: ul; Upper limit CI,
-					NUMBER: t (or z); t (or z) score,
-					NUMBER: p; p value
-					NUMBER: variance; Variance
-					NUMBER: weight; Weight (1 / variance)
-					NUMBER: weightTimesMean; weight * m
-					NUMBER: weightTimesSquaredMean; weight * m^2
-					NUMBER: weightSquared; weight^2
-					NUMBER: varianceRandom; Random model variance (weight + Tau^2)
-					NUMBER: weightRandom; Random model weight (1 / varianceRandom)
-					NUMBER: weightRandomTimesMean; weightRandom * m
-				}
-			],
-			OBJECT: weightSums; Sums of study weights {
-				OBJECT: fixed; Sums of fixed weights {
-					NUMBER: sumWeights,
-					NUMBER: sumWeightsTimesMeans,
-					NUMBER: sumWeightsTimesSquaredMeans,
-					NUMBER: sumSquaredWeights
-				}
-				OBJECT: random; Sums of random weights {
-					NUMBER: sumWeights,
-					NUMBER: sumWeightsTimesMeans,
-				}
-			},
-			OBJECT: heterogeneity; Heterogeneity information {
-				NUMBER: q; Q
-				NUMBER: c; C
-				NUMBER: tSq; Tau^2
-				NUMBER: t; Tau
-				NUMBER: iSq; I^2
-				NUMBER: b1; B1
-				NUMBER: b2; B2
-				NUMBER: b; B (B1 or B2)
-				NUMBER: l; L
-				NUMBER: u; U
-				NUMBER: lltSq; Lower Limit CI Tau^2
-				NUMBER: ultSq; Upper Limit CI Tau^2
-				NUMBER: llt; Lower Limit CI Tau
-				NUMBER: ult; Upper Limit CI Tau
-				NUMBER: p; p value for Q
-				NUMBER: ratio; Ratio of random / fixed model CI lengths
-			}
-			OBJECT: fixed, random {
-				NUMBER: mean;
-				NUMBER: variance;
-				NUMBER: sd;
-				NUMBER: moe;
-				NUMBER: ll;
-				NUMBER: ul;
-				NUMBER: z;
-				NUMBER: p;
-			}
-		}
-*/
 (function() {
 
 	this.metaAnalysis = function(config, dataSet) {
 
-		var i = 0,
+		var i = 0, // counter
 			ma = { // object to return
 				dataSet: [],
 				weightSums: {
@@ -105,9 +21,10 @@
 			nullMean: config.nullMean || 0
 		};
 		config.alpha = (100 - config.ci) / 100;
+		dataSet = dataSet || [];
 
-		ma.dataSet = getData(config.maType, config.alpha, config.nullMean, dataSet);
-		ma.weightSums.fixed = sumWeights("fixed", ma.dataSet);
+		ma.dataSet = getData(config.maType, config.alpha, config.nullMean, dataSet); // gather individual study info
+		ma.weightSums.fixed = sumWeights("fixed", ma.dataSet); // get fixed weights
 		ma.heterogeneity = getHeterogeneity(ma.weightSums.fixed, dataSet.length-1, config.alpha);
 		for (i = 0; i < ma.dataSet.length; i++) { // for each study in the dataset, add in its random model variance and weight
 			ma.dataSet[i].randomVariance = (1 / ma.dataSet[i].weight) + ma.heterogeneity.tSq; // random model variance
@@ -118,7 +35,7 @@
 		ma.random = metaAnalyse(ma.weightSums.random, config.alpha, config.nullMean, config.maType); // run the random model meta-analysis
 		ma.heterogeneity.modelRatio = (ma.random.ul - ma.random.ll) / (ma.fixed.ul - ma.fixed.ll); // get the ratio of the random model CI to the fixed model CI as a measure of heterogeneity
 
-		return ma;
+		return ma; // done
 	};
 	
 	function getData(maType, alpha, nullMean, dataIn) {
@@ -384,3 +301,87 @@
 	}
 
 })();
+/*
+	JavaScript Meta-Analysis
+
+	Required arguments:
+		OBJECT: Configuration {
+			STRING: maType; Type of analysis (default "means"),
+				SHOULD BE ONE OF THE FOLLOWING:
+				"means" - For single means. Requires M, SD, N,
+				"meanDiffs" - For difference between two independent group means. Requires M1, SD1, N1, M2, SD2, N2,
+				"meanPairedDiffs" - For difference between two dependent means. Requires M1, SD1, M2, SD3, N, paired t value,
+				"d" - Cohen's d for a single group. Requires d, N,
+				"dDiffs" - Cohen's d for the difference between two independent groups. Requires d, N1, N2,
+				"r" - Pearson's r correlations. Requires r, N
+			STRING: esName; Effect size name (default "Effect"),
+			NUMBER: ci; Confidence interval (default 95),
+			NUMBER: nullMean; Null hypothesis value (default 0)
+		},
+		ARRAY: Dataset of studies (min length 2) [
+			OBJECT: Individual study data {
+				Variables (all of type NUMBER) named according to maType above
+			}
+		]
+
+	Returns:
+		OBJECT: ma; Meta-analysis data {
+			ARRAY: dataSet; Dataset of studies [
+				OBJECT: Individual study data {
+					NUMBER: m; Point estimate (mean),
+					NUMBER: ll; Lower limit CI,
+					NUMBER: ul; Upper limit CI,
+					NUMBER: t (or z); t (or z) score,
+					NUMBER: p; p value
+					NUMBER: variance; Variance
+					NUMBER: weight; Weight (1 / variance)
+					NUMBER: weightTimesMean; weight * m
+					NUMBER: weightTimesSquaredMean; weight * m^2
+					NUMBER: weightSquared; weight^2
+					NUMBER: varianceRandom; Random model variance (weight + Tau^2)
+					NUMBER: weightRandom; Random model weight (1 / varianceRandom)
+					NUMBER: weightRandomTimesMean; weightRandom * m
+				}
+			],
+			OBJECT: weightSums; Sums of study weights {
+				OBJECT: fixed; Sums of fixed weights {
+					NUMBER: sumWeights,
+					NUMBER: sumWeightsTimesMeans,
+					NUMBER: sumWeightsTimesSquaredMeans,
+					NUMBER: sumSquaredWeights
+				}
+				OBJECT: random; Sums of random weights {
+					NUMBER: sumWeights,
+					NUMBER: sumWeightsTimesMeans,
+				}
+			},
+			OBJECT: heterogeneity; Heterogeneity information {
+				NUMBER: q; Q
+				NUMBER: c; C
+				NUMBER: tSq; Tau^2
+				NUMBER: t; Tau
+				NUMBER: iSq; I^2
+				NUMBER: b1; B1
+				NUMBER: b2; B2
+				NUMBER: b; B (B1 or B2)
+				NUMBER: l; L
+				NUMBER: u; U
+				NUMBER: lltSq; Lower Limit CI Tau^2
+				NUMBER: ultSq; Upper Limit CI Tau^2
+				NUMBER: llt; Lower Limit CI Tau
+				NUMBER: ult; Upper Limit CI Tau
+				NUMBER: p; p value for Q
+				NUMBER: ratio; Ratio of random / fixed model CI lengths
+			}
+			OBJECT: fixed, random {
+				NUMBER: mean;
+				NUMBER: variance;
+				NUMBER: sd;
+				NUMBER: moe;
+				NUMBER: ll;
+				NUMBER: ul;
+				NUMBER: z;
+				NUMBER: p;
+			}
+		}
+*/
