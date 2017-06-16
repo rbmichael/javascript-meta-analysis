@@ -108,8 +108,8 @@ $(function() {
 
 	});
 
-	// set the csv import button behaviour 
-	$('#updateCSV').click(function() {
+	// set the csv -> form button behaviour 
+	$('#csvToForm').click(function() {
 
 		var csv = $('#csv').val(), // get the textarea input
 			rows = csv.split('\n'), // split it into rows based on newline character
@@ -139,6 +139,25 @@ $(function() {
 
 	});
 
+	// set the form -> csv button behaviour
+	$('#formToCsv').click(function() {
+
+		var csv = ""; // for updating the <textarea>
+
+		$('#studies div').each(function(index) {
+			if (index !== 0) {
+				csv += "\n";
+			}
+			$(this).children('input').each(function(index) {
+				csv += $(this).val() + ","; // add the value and a comma
+			}); // loop through the inputs
+			csv = csv.slice(0, -1); // remove the extraneous final comma
+		}); // loop through the studies
+
+		$('#csv').val(csv);
+
+	});
+	
 	// set the 'run' button behaviour
 	$('#run').click(function() {
 

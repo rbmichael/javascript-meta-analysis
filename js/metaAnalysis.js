@@ -18,7 +18,7 @@
 		},
 		ARRAY: Dataset of studies (min length 2) [
 			ARRAY: Individual study data {
-				NUMBERs (according to maType above, e.g. "means" requires M, SD, N: [10,2,30])
+				NUMBERs (according to maType above, e.g. "means" requires M, SD, N: [ [10, 2, 30] , [8, 1, 40] ] )
 			}
 		]
 
@@ -108,7 +108,7 @@
 
 		ma.dataSet = getData(config.maType, config.alpha, config.nullMean, dataSet); // gather individual study info
 		ma.weightSums.fixed = sumWeights("fixed", ma.dataSet); // get fixed weights
-		ma.heterogeneity = getHeterogeneity(ma.weightSums.fixed, dataSet.length-1, config.alpha);
+		ma.heterogeneity = getHeterogeneity(ma.weightSums.fixed, dataSet.length-1, config.alpha); // get heterogeneity
 		for (i = 0; i < ma.dataSet.length; i++) { // for each study in the dataset, add in its random model variance and weight
 			ma.dataSet[i].randomVariance = (1 / ma.dataSet[i].weight) + ma.heterogeneity.tSq; // random model variance
 			ma.dataSet[i].randomWeight = 1 / ma.dataSet[i].randomVariance; // random model weight
@@ -132,10 +132,10 @@
 		for (i = 0; i < dataIn.length; i++) { // loop through the studies
 			switch (maType) { // get the appropriate statistics depending on the type of meta-analysis
 				case "means":
-					study.m = dataIn[i][0];
-					study.sd = dataIn[i][1];
-					study.n = dataIn[i][2];
-					study.weight = 1 / (Math.pow(study.sd, 2) / study.n);
+					study.m = dataIn[i][0]; // mean
+					study.sd = dataIn[i][1]; // standard deviation
+					study.n = dataIn[i][2]; // sample size
+					study.weight = 1 / (Math.pow(study.sd, 2) / study.n); // study weight
 					study.t = jStat.tscore(study.m, nullMean, study.sd, study.n); // t score
 					study.p = jStat.ttest(study.t, study.n); // p value
 					study.ci = jStat.tci(study.m, alpha, study.sd, study.n); // confidence interval
@@ -145,21 +145,21 @@
 					delete study.ci; // cleanup
 					break;
 				case "meanDiffs":
-					study.m1 = dataIn[i][0];
-					study.sd1 = dataIn[i][1];
-					study.n1 = dataIn[i][2];
-					study.m2 = dataIn[i][3];
-					study.sd2 = dataIn[i][4];
-					study.n2 = dataIn[i][5];
+					study.m1 = dataIn[i][0]; // mean 1
+					study.sd1 = dataIn[i][1]; // standard deviation 1
+					study.n1 = dataIn[i][2]; // sample size 1
+					study.m2 = dataIn[i][3]; // mean 2
+					study.sd2 = dataIn[i][4]; // standard deviation 2
+					study.n2 = dataIn[i][5]; // sample size 2
 					study.mDiff = study.m2 - study.m1; // mean difference
 					study.df = study.n1 + study.n2 - 2; // degrees of freedom
 					study.sd = Math.sqrt(((study.n1 - 1) * Math.pow(study.sd1, 2) + (study.n2 - 1) * Math.pow(study.sd2, 2)) / study.df); // pooled standard deviation
 					study.variance = Math.pow(study.sd, 2) * ((1 / study.n1) + (1 / study.n2)); // variance of the difference
 					study.t_crit = jStat.studentt.inv((1 - (alpha / 2)), study.df); // critical t value
-					study.moe = study.t_crit * Math.sqrt(study.variance); // margin of error of difference
+					study.moe = study.t_crit * Math.sqrt(study.variance); // margin of error
 					study.weight = 1 / study.variance; // study weight
 					study.t = (study.mDiff - nullMean) / Math.sqrt(study.variance); // t score
-					study.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(study.t), study.df))); // p value
+					study.p = jStat.ttest(study.t, (study.n1+study.n2-1)); // p value
 					study.ll = study.mDiff - study.moe; // lower limit CI
 					study.ul = study.mDiff + study.moe; // upper limit CI
 					study.mid = study.mDiff; // for later weight calculation
@@ -169,22 +169,22 @@
 					delete study.moe;
 					break;
 				case "meanPairedDiffs":
-					study.m1 = dataIn[i][0];
-					study.sd1 = dataIn[i][1];
-					study.m2 = dataIn[i][2];
-					study.sd2 = dataIn[i][3];
-					study.n = dataIn[i][4];
-					study.t = dataIn[i][5];
-					study.mDiff = study.m2 - study.m1; // calculate mean difference
+					study.m1 = dataIn[i][0]; // mean 1
+					study.sd1 = dataIn[i][1]; // standard deviation 1
+					study.m2 = dataIn[i][2]; // mean 2
+					study.sd2 = dataIn[i][3]; // standard deviation 2
+					study.n = dataIn[i][4]; // sample size
+					study.t = dataIn[i][5]; // paired t value
+					study.mDiff = study.m2 - study.m1; // mean difference
 					study.df = study.n - 1; // degrees of freedom
-					study.t_crit = jStat.studentt.inv((1 - (alpha / 2)), study.df); // calculate critical t value
+					study.t_crit = jStat.studentt.inv((1 - (alpha / 2)), study.df); //  critical t value
 					study.se = Math.abs(study.mDiff - nullMean) * (1 / study.t); // standard error calculated from known paired t value
 					study.variance = Math.pow(study.se, 2); // variance
-					study.moe = study.t_crit * study.se; // calculate margin of error
+					study.moe = study.t_crit * study.se; // margin of error
 					study.weight = 1 / study.variance; // study weight
-					study.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(study.t), study.df))); // calculate p value
-					study.ll = study.mDiff - study.moe; // lower limit 95% CI
-					study.ul = study.mDiff + study.moe; // upper limit 95% CI
+					study.p = jStat.ttest(study.t, study.n) // p value
+					study.ll = study.mDiff - study.moe; // lower limit CI
+					study.ul = study.mDiff + study.moe; // upper limit CI
 					study.mid = study.mDiff; // for later weight calculation
 					delete study.df; // cleanup
 					delete study.t_crit;
@@ -193,8 +193,8 @@
 					delete study.moe;
 					break;
 				case "d":
-					study.d = dataIn[i][0];
-					study.n = dataIn[i][1];
+					study.d = dataIn[i][0]; // Cohen's d
+					study.n = dataIn[i][1]; // sample size
 					study.sqrtN = Math.sqrt(1 / study.n); // square root of (1/N)
 					study.ncp = study.d / study.sqrtN; // non-central parameter
 					study.df = study.n - 1; // degrees of freedom
@@ -207,8 +207,8 @@
 					if (study.ncpU === undefined) { study.ncpU = study.ncp + study.t_crit; } // workaround for nonCentralT failing at high Ns
 					study.ll = study.ncpL * study.sqrtN; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
 					study.ul = study.ncpU * study.sqrtN; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
-					study.variance = (1 + (Math.pow(study.d, 2)) / 2) / study.n; // calculate d variance
-					study.weight = 1 / study.variance; // calculate study weight when using d
+					study.variance = (1 + (Math.pow(study.d, 2)) / 2) / study.n; // variance
+					study.weight = 1 / study.variance; // weight
 					study.t = jStat.tscore(study.d, nullMean, Math.sqrt(study.variance * study.n), study.n) // t score
 					study.p = jStat.ttest(study.t, study.n); // p value
 					study.mid = study.d; // for later weight calculation
@@ -221,8 +221,8 @@
 					delete study.variance;
 					break;
 				case "dUnb":
-					study.d = dataIn[i][0];
-					study.n = dataIn[i][1];
+					study.d = dataIn[i][0]; // Cohen's d
+					study.n = dataIn[i][1]; // sample size
 					study.sqrtN = Math.sqrt(1 / study.n); // square root of (1/N)
 					study.ncp = study.d / study.sqrtN; // non-central parameter
 					study.df = study.n - 1; // degrees of freedom
@@ -252,9 +252,9 @@
 					delete study.variance;
 					break;
 				case "dDiffs":
-					study.d = dataIn[i][0];
-					study.n1 = dataIn[i][1];
-					study.n2 = dataIn[i][2];
+					study.d = dataIn[i][0]; // Cohen's d of the difference between two groups
+					study.n1 = dataIn[i][1]; // sample size 1
+					study.n2 = dataIn[i][2]; // sample size 2
 					study.sqrtN12 = Math.sqrt(1 / study.n1 + 1 / study.n2); // square root of (1/N1 + 1/N2)
 					study.ncp = study.d / study.sqrtN12; // non-central parameter
 					study.df = study.n1 + study.n2 - 2; // degrees of freedom
@@ -267,12 +267,12 @@
 					if (study.ncpU === undefined) { study.ncpU = study.ncp + study.t_crit; } // workaround for nonCentralT failing at high Ns
 					study.ll = study.ncpL * study.sqrtN12; // lower limit of CI for the ES (either d or unbiased d; it doesn't change)
 					study.ul = study.ncpU * study.sqrtN12; // upper limit of CI for the ES (either d or unbiased d; it doesn't change)
-					study.variance = (study.n1 + study.n2) / (study.n1 * study.n2) + (Math.pow(study.d, 2)) / (2 * (study.n1 + study.n2)); // calculate d variance
-					study.weight = 1 / study.variance; // calculate study weight when using d
-					study.t = (study.d - nullMean) / Math.sqrt((study.n1 + study.n2) / (study.n1 * study.n2) + (Math.pow(study.d, 2)) / (2 * (study.n1 + study.n2))); // calculate t
-					study.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(study.t), study.df))); // calculate p value
+					study.variance = (study.n1 + study.n2) / (study.n1 * study.n2) + (Math.pow(study.d, 2)) / (2 * (study.n1 + study.n2)); // variance
+					study.weight = 1 / study.variance; // weight
+					study.t = (study.d - nullMean) / Math.sqrt((study.n1 + study.n2) / (study.n1 * study.n2) + (Math.pow(study.d, 2)) / (2 * (study.n1 + study.n2))); // t score
+					study.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(study.t), study.df))); // p value
 					study.mid = study.d; // for later weight calculation
-					delete study.sqrtN12;
+					delete study.sqrtN12; // cleanup
 					delete study.ncp;
 					delete study.df;
 					delete study.t_crit;
@@ -281,9 +281,9 @@
 					delete study.variance;
 					break;
 				case "dUnbDiffs":
-					study.d = dataIn[i][0];
-					study.n1 = dataIn[i][1];
-					study.n2 = dataIn[i][2];
+					study.d = dataIn[i][0]; // Cohen's d of the difference between two groups
+					study.n1 = dataIn[i][1]; // sample size 1
+					study.n2 = dataIn[i][2]; // sample size 2
 					study.sqrtN12 = Math.sqrt(1 / study.n1 + 1 / study.n2); // square root of (1/N1 + 1/N2)
 					study.ncp = study.d / study.sqrtN12; // non-central parameter
 					study.df = study.n1 + study.n2 - 2; // degrees of freedom
@@ -300,10 +300,10 @@
 					study.variance = Math.pow(study.dMod, 2) * ((study.n1 + study.n2) / (study.n1 * study.n2) + (Math.pow(study.d, 2)) / (2 * (study.n1 + study.n2))); // change variance to unbiased d variance
 					study.d = study.d * study.dMod; // change d to unbiased d
 					study.weight = 1 / study.variance; // change weight to unbiased d weight
-					study.t = (study.d - nullMean) / Math.sqrt((study.n1 + study.n2) / (study.n1 * study.n2) + (Math.pow(study.d, 2)) / (2 * (study.n1 + study.n2))); // calculate t
-					study.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(study.t), study.df))); // calculate p value
+					study.t = (study.d - nullMean) / Math.sqrt((study.n1 + study.n2) / (study.n1 * study.n2) + (Math.pow(study.d, 2)) / (2 * (study.n1 + study.n2))); // t score
+					study.p = 2 * (1 - (jStat.studentt.cdf(Math.abs(study.t), study.df))); // p value
 					study.mid = study.d; // for later weight calculation
-					delete study.sqrtN12;
+					delete study.sqrtN12; // cleanup
 					delete study.ncp;
 					delete study.df;
 					delete study.t_crit;
@@ -313,12 +313,12 @@
 					delete study.variance;
 					break;
 				case "r":
-					study.r = dataIn[i][0];
-					study.n = dataIn[i][1];
-					study.rZ = 0.5 * Math.log((1 + study.r) / (1 - study.r)); // z for r
-					study.varZ = 1 / (study.n - 3); // var of z
-					study.zLL = study.rZ - jStat.normal.inv((1 - (alpha / 2)), 0, 1) * Math.sqrt(study.varZ); // z LL
-					study.zUL = study.rZ + jStat.normal.inv((1 - (alpha / 2)), 0, 1) * Math.sqrt(study.varZ); // z UL
+					study.r = dataIn[i][0]; // Pearson's r correlations
+					study.n = dataIn[i][1]; // sample size
+					study.rZ = 0.5 * Math.log((1 + study.r) / (1 - study.r)); // Fisher's z for r
+					study.varZ = 1 / (study.n - 3); // variance of Fisher's z
+					study.zLL = study.rZ - jStat.normal.inv((1 - (alpha / 2)), 0, 1) * Math.sqrt(study.varZ); // Fisher's z LL
+					study.zUL = study.rZ + jStat.normal.inv((1 - (alpha / 2)), 0, 1) * Math.sqrt(study.varZ); // Fisher's z UL
 					study.weight = 1 / study.varZ; // weight
 					study.z = jStat.zscore(study.rZ, nullMean, Math.sqrt(study.varZ)) // z score
 					study.p = jStat.ztest(study.z); // p value
@@ -333,13 +333,13 @@
 				default:
 					break;
 			}
-			study.weightTimesMean = study.weight * study.mid;
-			study.weightTimesSquaredMean = study.weight * Math.pow(study.mid, 2);
-			study.weightSquared = Math.pow(study.weight, 2);
+			study.weightTimesMean = study.weight * study.mid; // study weight * study mean
+			study.weightTimesSquaredMean = study.weight * Math.pow(study.mid, 2); // study weight * (study mean)^2
+			study.weightSquared = Math.pow(study.weight, 2); // (study weight)^2
 			dataOut[i] = Object.assign({}, study); // copy the study data into the dataset
 		}
 
-		return dataOut;
+		return dataOut; // pass the data back
 
 	}
 
@@ -444,8 +444,8 @@
 		maData.p = jStat.ztest(maData.z); // p value
 		if (maType === "r") { // make some adjustments for Pearson correlation meta-analysis type
 			maData.mean = (Math.exp(2 * maData.mean) - 1) / (Math.exp(2 * maData.mean) + 1); // M of r
-			maData.ll = maData.mean - ((Math.exp(2 * maData.moe) - 1) /  (Math.exp(2 * maData.moe) + 1));
-			maData.ul = maData.mean + ((Math.exp(2 * maData.moe) - 1) /  (Math.exp(2 * maData.moe) + 1));
+			maData.ll = maData.mean - ((Math.exp(2 * maData.moe) - 1) /  (Math.exp(2 * maData.moe) + 1)); // LL
+			maData.ul = maData.mean + ((Math.exp(2 * maData.moe) - 1) /  (Math.exp(2 * maData.moe) + 1)); // UL
 		}
 
 		return maData;
