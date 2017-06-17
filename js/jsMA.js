@@ -157,7 +157,67 @@ $(function() {
 		$('#csv').val(csv);
 
 	});
-	
+
+	// set the csv -> forest plot button behaviour
+	$('#csvToForest').click(function() {
+
+		var csv = $('#csvForest').val(), // get the textarea input
+			rows = csv.split('\n'), // split it into rows based on newline character
+			data = [], // an array to hold the data arrays
+			plotData = [], // reconfigured to object to pass to the forest plot function
+			plotConfig = {}, // for forest plot configuration variables
+			maxWeight = 0, // maximum study weight
+			sumWeights = 0, // total study weights
+			scale = 0, // for scaling plot box sizes
+			i = 0, // counter
+			j = 0; // counter
+		for (i = 0; i < rows.length; i++) { // create an array of values from each row of data
+			data[i] = rows[i].split(',');
+			data[i][4] = data[i][4] || 0; // if no weight info, use zero
+			for (j = 1; j < data[i].length; j++) { // convert all the values except study names to numbers
+				data[i][j] = Number(data[i][j]);
+			}
+		}
+		plotConfig = {
+			mountNode: '#display', // where to mount the plot
+			effectLabel: $('#esName').val() || "Effect", // effect size name
+			vBar: $('#null').val() || 0 // vertical bar for the null hypothesis
+		}; // forest plot configuration
+		plotData.push({
+			description: "Meta-analysis Forest Plot",
+			overrideLabel: "Mean (LL, UL)"
+		}); // headings row
+		plotData.push({
+			description: " ",
+			overrideLabel: " "
+		}); // blank row
+		for (i = 0; i < data.length; i++) {
+			sumWeights += data[i][4];
+			if (data[i][4] > maxWeight) {
+				maxWeight = data[i][4];
+			}
+		} // loop through studies to find the maximum weight
+		scale = 1 / (maxWeight / sumWeights); // set the marker re-scale multiplier based on study with maximum weight
+		for (i = 0; i < data.length; i++) {
+			plotData.push({
+				description: data[i][0], // the study name
+				descriptionOffset: 1, // indent the study name
+				effect: {
+					effect: data[i][1], // the mean
+					low: data[i][2], // the lower limit
+					high: data[i][3] // the upper limit
+				},
+				markerSize: ((data[i][4] / sumWeights) * scale) || 0.5 // size of the study's square (scaled accordingly)
+			});
+		} // loop through studies, adding to the forest plot data
+		forestPlot(plotConfig, plotData);
+		$('#display').append("<div><a href=\"#\" id=\"save\">Save forest plot as PNG</a></div>"); // add a button to save the forest plot
+		$('#save').click(function() {
+			saveSvgAsPng(d3.select('svg').node(), "myForestPlot.png"); // save the forest plot
+		}); // setup the save-as-PNG link
+
+	});
+
 	// set the 'run' button behaviour
 	$('#run').click(function() {
 
