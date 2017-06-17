@@ -442,10 +442,10 @@
 		maData.ul = maData.mean + maData.moe; // upper limit of 95% CI
 		maData.z = jStat.zscore(maData.mean, nullMean, maData.se); // z score
 		maData.p = jStat.ztest(maData.z); // p value
-		if (maType === "r") { // make some adjustments for Pearson correlation meta-analysis type
+		if (maType === "r") { // convert back from Fisher's Zs to Pearson correlations
 			maData.mean = (Math.exp(2 * maData.mean) - 1) / (Math.exp(2 * maData.mean) + 1); // M of r
-			maData.ll = maData.mean - ((Math.exp(2 * maData.moe) - 1) /  (Math.exp(2 * maData.moe) + 1)); // LL
-			maData.ul = maData.mean + ((Math.exp(2 * maData.moe) - 1) /  (Math.exp(2 * maData.moe) + 1)); // UL
+			maData.ll = (Math.exp(2 * maData.ll) - 1) / (Math.exp(2 * maData.ll) + 1); // LL
+			maData.ul = (Math.exp(2 * maData.ul) - 1) / (Math.exp(2 * maData.ul) + 1); // UL
 		}
 
 		return maData;
