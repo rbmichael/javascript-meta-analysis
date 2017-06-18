@@ -124,6 +124,11 @@ function forestPlot(config, data) {
     }
   }
 
+  // scale correction if we have vBar
+  // code added 18th June 2017 by Robert B. Michael (robert.michael@gmail.com)
+  if (config.vBar <= lowX) { lowX = config.vBar; }
+  if (config.vBar >= highX) { highX = config.vBar; }
+  
   var x = d3.scaleLinear()
     .domain([lowX - Math.abs(0.1 * lowX), highX + Math.abs(0.1 * highX)])
     .range([0, config.width * layout.plotWidth])

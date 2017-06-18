@@ -4,18 +4,18 @@ html {
 }
 
 body {
-	background-color: #FFF;
+	background-color: #FCFCFC;
 	margin: 0em;
 }
 
 h1 {
 	margin: 0em;
-	font-size: 1.25em;
+	font-size: 1.2em;
 }
 
 h2 {
 	margin: 0em;
-	font-size: 1.15em;
+	font-size: 1.1em;
 }
 
 h3 {
@@ -31,6 +31,7 @@ a {
 
 a:hover {
 	text-decoration: underline;
+	cursor: pointer;
 }
 
 input[type="number"] {
@@ -88,14 +89,23 @@ pre {
 }
 
 .data {
-	padding: 0em 1em;
+	padding: 0em 1em 2em 1em;
+	background-color: #FFF;
 }
 
 .footer {
-	padding: 1em;
-	margin-top: 1.5em;
+	padding: 0em 1em 1em 1em;
 	color: #000;
 	border-top: 1px solid #CCC;
+}
+
+#instructions {
+	padding: 1em 0em 0em 0em;
+}
+
+#errors {
+	color: #F00;
+	font-size: 0.8em;
 }
 
 #studies {
@@ -103,6 +113,7 @@ pre {
 	padding: 0em;
 	border: 1px solid #CCC;
 	display: inline-block;
+	vertical-align: top;
 }
 
 #studies > div:nth-of-type(odd) {
@@ -115,6 +126,12 @@ pre {
 	background: #F9F9F9;
 }
 
+#csvContainer {
+	margin: 0.5em 0em 0em 0.5em;
+	padding: 0em;
+	display: inline-block;
+	vertical-align: top;
+}
 #dUnbiased {
 	margin: 0.5em 0em 0em 0em;
 }

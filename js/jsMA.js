@@ -21,37 +21,43 @@ $(function() {
  		name: "means",
  		description: "Single means",
  		dataFields: ["M", "SD", "N"],
- 		dataRules: [0, 1, 2]
+ 		dataRules: [0, 1, 2],
+ 		instructions: "Meta-analysis of single means. Requires the following from each study entered: Mean (M), Standard deviation (SD), and sample size (N)."
  	});
 	maTypesArray.push({
 		name: "meanDiffs",
 		description: "Diff btwn 2 ind group means",
 		dataFields: ["M1", "SD1", "N1", "M2", "SD2", "N2"],
-		dataRules: [0, 1, 2, 0, 1, 2]
+		dataRules: [0, 1, 2, 0, 1, 2],
+ 		instructions: "Meta-analysis of the difference between two independent group means. Requires the following from each study entered: Mean Group 1 (M1), Standard deviation Group 1 (SD1), Sample size Group 1 (N1), Mean Group 2 (M2), Standard deviation Group 2 (SD2), Sample size Group 2 (N2)."
 	});
 	maTypesArray.push({
 		name: "meanPairedDiffs",
 		description: "Diff btwn 2 dependent means",
 		dataFields: ["M1", "SD1", "M2", "SD2", "N", "t"],
-		dataRules: [0, 1, 0, 1, 2, 0]
+		dataRules: [0, 1, 0, 1, 2, 0],
+ 		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean 1 (M1), Standard deviation 1 (SD1), Mean 2 (M2), Standard deviation 2 (SD2), Sample size (N), Paired t-test value (t)."
 	});
 	maTypesArray.push({
 		name:"d",
 		description: "Cohen's d for a single group",
 		dataFields: ["d", "N"],
-		dataRules:[0, 2]
+		dataRules:[0, 2],
+ 		instructions: "Meta-analysis of Cohen's d for a single group. Requires the following from each study entered: Cohen's d (d), Sample size (N)."
 	});
 	maTypesArray.push({
 		name: "dDiffs",
 		description: "Cohen's d for 2 ind groups",
 		dataFields: ["d", "N1", "N2"],
-		dataRules: [0, 2, 2]
+		dataRules: [0, 2, 2],
+ 		instructions: "Meta-analysis of the difference between Cohen's ds for two independent groups. Requires the following from each study entered: Cohen's d of the group difference (d), Sample size Group 1 (N1), Sample size Group 2 (N2)."
 	});
 	maTypesArray.push({
 		name:"r",
 		description: "Pearson's r correlations",
 		dataFields: ["r", "N"],
-		dataRules:[3, 2]
+		dataRules:[3, 2],
+ 		instructions: "Meta-analysis of Pearson's r correlations for a single group. Requires the following from each study entered: Pearson's r correlation (r), Sample size (N)."
 	});
 
 	// populate the <select> element for choosing a type of meta-analysis from maTypesArray
@@ -101,6 +107,8 @@ $(function() {
 		$('#display *').detach(); // clear the display
 		$('#errors *').detach(); // clear the errors
 		$('#studies *').detach(); // remove all studies
+		$('#instructions *').detach(); // clear previous instructions
+		$('#instructions').append("<div>" + maTypesArray[currentMAType].instructions + "</div>"); // show instructions
 		$('#add').click(); // add the 2 minimum study rows
 		$('#add').click();
 
@@ -179,7 +187,7 @@ $(function() {
 		plotConfig = {
 			mountNode: '#display', // where to mount the plot
 			effectLabel: $('#esName').val() || "Effect", // effect size name
-			vBar: $('#null').val() || 0 // vertical bar for the null hypothesis
+			vBar: Number($('#null').val()) || 0 // vertical bar for the null hypothesis
 		}; // forest plot configuration
 		plotData.push({
 			description: "Meta-analysis Forest Plot",
@@ -386,9 +394,8 @@ $(function() {
 	// hide the dUnbiased checkbox
 	$('#dUnbiased').hide();
 
-	// add the initial 2 study rows
-	$('#add').click();
-	$('#add').click();
+	// reset and add the initial 2 study rows
+	$('#removeAll').click();
 
 	// enable the 'run' button
 	$('#run').prop('disabled', false);
