@@ -1,11 +1,27 @@
 html {
 	font-family: Merriweather, Arial;
-	font-size: 12pt;
+	font-size: 1em;
 }
 
 body {
 	background-color: #FFF;
-	margin: 0px;
+	margin: 0em;
+}
+
+h1 {
+	margin: 0em;
+	font-size: 1.25em;
+}
+
+h2 {
+	margin: 0em;
+	font-size: 1.15em;
+}
+
+h3 {
+	margin: 0em;
+	padding: 1em 0em 0em 0em;
+	font-size: 1.05em;
 }
 
 a {
@@ -18,50 +34,29 @@ a:hover {
 }
 
 input[type="number"] {
-	width: 50px;
-}
-
-input[type="text"] {
-	width: 100px;
-}
-
-input, textarea {
-	font-family: Merriweather, Arial;
-	font-size: 10pt;
-}
-
-button {
-	font-family: Merriweather, Arial;
-	font-size: 10pt;
-	margin: 3px 0px;
-	background-color: #EFF2F5;
-}
-
-button:hover {
-	background-color: #E4E8EC;
-}
-
-button:focus {
-	outline: none;
+	width: 4em;
 }
 
 select {
-	font-family: Merriweather, Arial;
-	font-size: 10pt;
-	background-color: #EFF2F5;
-	color: #000;
-}
-
-select:hover {
-	background-color: #E4E8EC;
+	width: 100%;
 }
 
 select:focus {
 	outline: none;
 }
 
+textarea {
+	width: 20em;
+	height: 5em;
+}
+
+pre {
+	display: inline-block;
+	margin: 1em;
+}
+
 .header {
-	padding: 15px;
+	padding: 1em;
 	background-color: #2B2D2F;
 	color: rgba(255, 255, 255, 0.80);
 }
@@ -76,34 +71,50 @@ select:focus {
 }
 
 .menu {
-	padding: 15px;
+	padding: 1em 0em;
 	background-color: #F8F8F4;
 	border-bottom: 1px solid #CCC;
 }
 
 .menu ul {
-	display: table;
-	table-layout: fixed;
-	margin: 0px;
-	padding: 0px;
+	display: table-row;
+	margin: 0em;
+	padding: 0em;
 }
 
 .menu ul li {
 	display: table-cell;
-	padding: 0px 15px 0px 0px;
-}
-
-.menu p {
-	margin: 0px;
+	padding: 0em 0em 0em 1em;
 }
 
 .data {
-	padding: 15px;
+	padding: 0em 1em;
 }
 
 .footer {
-	padding: 15px;
-	margin-top: 30px;
-	color: rgba(0, 0, 0, 0.8);
+	padding: 1em;
+	margin-top: 1.5em;
+	color: #000;
 	border-top: 1px solid #CCC;
+}
+
+#studies {
+	margin: 0.5em 0em;
+	padding: 0em;
+	border: 1px solid #CCC;
+	display: inline-block;
+}
+
+#studies > div:nth-of-type(odd) {
+	padding: 0.5em;
+	background: #F0F0F0;
+}
+
+#studies > div:nth-of-type(even) {
+	padding: 0.5em;
+	background: #F9F9F9;
+}
+
+#dUnbiased {
+	margin: 0.5em 0em 0em 0em;
 }

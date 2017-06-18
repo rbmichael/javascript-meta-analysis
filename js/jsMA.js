@@ -25,13 +25,13 @@ $(function() {
  	});
 	maTypesArray.push({
 		name: "meanDiffs",
-		description: "Difference between two independent group means",
+		description: "Diff btwn 2 ind group means",
 		dataFields: ["M1", "SD1", "N1", "M2", "SD2", "N2"],
 		dataRules: [0, 1, 2, 0, 1, 2]
 	});
 	maTypesArray.push({
 		name: "meanPairedDiffs",
-		description: "Difference between two dependent means",
+		description: "Diff btwn 2 dependent means",
 		dataFields: ["M1", "SD1", "M2", "SD2", "N", "t"],
 		dataRules: [0, 1, 0, 1, 2, 0]
 	});
@@ -43,7 +43,7 @@ $(function() {
 	});
 	maTypesArray.push({
 		name: "dDiffs",
-		description: "Cohen's d for two independent groups",
+		description: "Cohen's d for 2 ind groups",
 		dataFields: ["d", "N1", "N2"],
 		dataRules: [0, 2, 2]
 	});
@@ -79,14 +79,12 @@ $(function() {
 			html = "", // to hold the html for the study row
 			i = 0; // counter
 
-		$('#studies').append("<div></div>"); // add the html for a new study
-
-		html += "Study name: <input type=\"text\" value=\"\"></input>"; // optional study name field
+		html += "<div>Study name: <input type=\"text\" value=\"\"></input>"; // optional study name field
 		for (i = 0; i < fields.length; i++) { // form fields
 			html += " " + fields[i] + ": <input type=\"number\"></input>";
 		}
-		html += " <button class=\"remove\">Remove</button>"; // remove study button
-		$('#studies div:last').append(html); // update the container html
+		html += " <button class=\"remove\">Remove</button></div>"; // remove study button
+		$('#studies').append(html);
 		$('#studies div:last .remove').click(function() { // add the remove button behaviour
 			if ($('#studies div').length > 2) { // if 3+ studies, remove the row
 				$(this).parent().detach();
@@ -334,7 +332,7 @@ $(function() {
 			overrideLabel: " "
 		}); // add the model ratio measure of heterogeneity
 		$('#display *').detach(); // clear the display
-		$('#display').append("<div id=\"forestPlot\"></div>"); // add a container for the forest plot
+		$('#display').append("<hr><div id=\"forestPlot\"></div>"); // add a container for the forest plot
 		forestPlot(forestPlotConfig, forestPlotData); // display the forest plot
 		$('#display').append("<div><a href=\"#\" id=\"save\">Save forest plot as PNG</a></div>"); // add a button to save the forest plot
 		$('#save').click(function() {
@@ -381,7 +379,7 @@ $(function() {
 		/* display the time taken to run the meta-analysis */
 		/* ----------------------------------------------- */
 		timeTaken = performance.now() - timeTaken; // calculate time taken to run meta-analysis
-		$('#display').append("<div>(Time taken to run analysis: " + timeTaken.toFixed(0) + "ms)</div>"); // and display
+		$('#display').append("<div>(Time taken to run analysis: " + timeTaken.toFixed(0) + "ms)</div><br><hr>"); // and display
 
 	});
 
