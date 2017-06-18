@@ -12,7 +12,8 @@
 				"dUnb" - As above but calculates an Unbiased d,
 				"dDiffs" - Cohen's d for the difference between two independent groups. Requires d, N1, N2,
 				"dUnbDiffs" - As above but calculates an Unbiased d,
-				"r" - Pearson's r correlations. Requires r, N
+				"r" - Pearson's r correlations. Requires r, N,
+				"rDiffs" - For difference between two independent group correlations. Requires r1, N1, r2, N2.
 			NUMBER: ci; Confidence interval (default 95),
 			NUMBER: nullMean; Null hypothesis value (default 0)
 		},
@@ -329,6 +330,26 @@
 					delete study.varZ;
 					delete study.zLL;
 					delete study.zUL;
+					break;
+				case "rDiffs":
+					study.r1 = dataIn[i][0]; // Pearson's r correlations 1
+					study.n1 = dataIn[i][1]; // sample size 1
+					study.r2 = dataIn[i][2]; // Pearson's r correlations 2
+					study.n2 = dataIn[i][3]; // sample size 2
+					study.r1z = 0.5 * Math.log((1 + study.r1) / (1 - study.r1)); // Fisher's z for r 1
+					study.r2z = 0.5 * Math.log((1 + study.r2) / (1 - study.r2)); // Fisher's z for r 2
+					study.varZ = (1 / (study.n1 - 3)) + (1 / (study.n2 - 3)) ; // variance
+					study.zDiff = (study.r1z - study.r2z) / Math.sqrt(study.varZ); // z difference btwn Fisher's Zs
+					study.ll = study.zDiff - jStat.normal.inv((1 - (alpha / 2)), 0, 1) * Math.sqrt(study.varZ); // Fisher's z difference LL
+					study.ul = study.zDiff + jStat.normal.inv((1 - (alpha / 2)), 0, 1) * Math.sqrt(study.varZ); // Fisher's z difference UL
+					study.weight = 1 / study.varZ; // weight
+					study.z = jStat.zscore(study.zDiff, nullMean, Math.sqrt(study.varZ)) // z score
+					study.p = jStat.ztest(study.z); // p value
+					study.mid = study.zDiff; // for later weight calculation
+					delete study.r1z; // cleanup
+					delete study.r2z;
+					delete study.varZ;
+					delete study.zDiff;
 					break;
 				default:
 					break;

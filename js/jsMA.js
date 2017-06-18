@@ -54,10 +54,17 @@ $(function() {
 	});
 	maTypesArray.push({
 		name:"r",
-		description: "Pearson's r correlations",
+		description: "Pearson's r single group",
 		dataFields: ["r", "N"],
 		dataRules:[3, 2],
  		instructions: "Meta-analysis of Pearson's r correlations for a single group. Requires the following from each study entered: Pearson's r correlation (r), Sample size (N)."
+	});
+	maTypesArray.push({
+		name:"rDiffs",
+		description: "Pearson's r diffs btwn 2 ind groups",
+		dataFields: ["r1", "N1", "r2", "N2"],
+		dataRules:[3, 2, 3, 2],
+ 		instructions: "Meta-analysis of differences between Pearson's r correlations for two independent groups. Requires the following from each study entered: Pearson's r correlation for Group 1 (r1), Sample size Group 1 (N1), Pearson's r correlation for Group 2 (r2), Sample size Group 2 (N2).<br>NOTE: Results are expressed in Z-scores (Fisher's z transformation)."
 	});
 
 	// populate the <select> element for choosing a type of meta-analysis from maTypesArray
