@@ -32,11 +32,18 @@ $(function() {
  		instructions: "Meta-analysis of the difference between two independent group means. Requires the following from each study entered: Mean Group 1 (M1), Standard deviation Group 1 (SD1), Sample size Group 1 (N1), Mean Group 2 (M2), Standard deviation Group 2 (SD2), Sample size Group 2 (N2)."
 	});
 	maTypesArray.push({
-		name: "meanPairedDiffs",
-		description: "Diff btwn 2 dependent means",
+		name: "meanPairedDiffsT",
+		description: "Diff btwn 2 dependent means (t known)",
 		dataFields: ["M1", "SD1", "M2", "SD2", "N", "t"],
 		dataRules: [0, 1, 0, 1, 2, 0],
  		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean 1 (M1), Standard deviation 1 (SD1), Mean 2 (M2), Standard deviation 2 (SD2), Sample size (N), Paired t-test value (t)."
+	});
+	maTypesArray.push({
+		name: "meanPairedDiffsP",
+		description: "Diff btwn 2 dependent means (p known)",
+		dataFields: ["M1", "SD1", "M2", "SD2", "N", "p"],
+		dataRules: [0, 1, 0, 1, 2, 3],
+ 		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean 1 (M1), Standard deviation 1 (SD1), Mean 2 (M2), Standard deviation 2 (SD2), Sample size (N), p value (p)."
 	});
 	maTypesArray.push({
 		name:"d",
@@ -65,6 +72,13 @@ $(function() {
 		dataFields: ["r1", "N1", "r2", "N2"],
 		dataRules:[3, 2, 3, 2],
  		instructions: "Meta-analysis of differences between Pearson's r correlations for two independent groups. Requires the following from each study entered: Pearson's r correlation for Group 1 (r1), Sample size Group 1 (N1), Pearson's r correlation for Group 2 (r2), Sample size Group 2 (N2).<br>NOTE: Results are expressed in Z-scores (Fisher's z transformation)."
+	});
+	maTypesArray.push({
+		name:"prop",
+		description: "Single proportions",
+		dataFields: ["x", "N"],
+		dataRules:[1, 2],
+ 		instructions: "Meta-analysis of single proportions. Requires the following from each study entered: Relevant subset of sample (x), Sample size (N)."
 	});
 
 	// populate the <select> element for choosing a type of meta-analysis from maTypesArray
@@ -313,7 +327,7 @@ $(function() {
 				description: $('#studies div input[type="text"]').eq(i).val() || "Study " + (i + 1), // the study name
 				descriptionOffset: 1, // indent the study name
 				effect: {
-					effect: (ma.dataSet[i].r || ma.dataSet[i].mid), // the mean ('mid' for all types except 'r')
+					effect: (ma.dataSet[i].r || ma.dataSet[i].prop || ma.dataSet[i].mid), // the mean ('mid' for all types except 'r' and 'prop')
 					low: ma.dataSet[i].ll, // the lower limit
 					high: ma.dataSet[i].ul // the upper limit
 				},

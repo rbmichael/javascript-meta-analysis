@@ -7,7 +7,8 @@
 				SHOULD BE ONE OF THE FOLLOWING:
 				"means" - For single means. Requires M, SD, N,
 				"meanDiffs" - For difference between two independent group means. Requires M1, SD1, N1, M2, SD2, N2,
-				"meanPairedDiffs" - For difference between two dependent means. Requires M1, SD1, M2, SD3, N, paired t value,
+				"meanPairedDiffsT" - For difference between two dependent means with known paired t value. Requires M1, SD1, M2, SD2, N, paired t value,
+				"meanPairedDiffsP" - For difference between two dependent means with known p value. Requires M1, SD1, M2, SD2, N, p value,
 				"d" - Cohen's d for a single group. Requires d, N,
 				"dUnb" - As above but calculates an Unbiased d,
 				"dDiffs" - Cohen's d for the difference between two independent groups. Requires d, N1, N2,
@@ -164,12 +165,14 @@
 					study.ll = study.mDiff - study.moe; // lower limit CI
 					study.ul = study.mDiff + study.moe; // upper limit CI
 					study.mid = study.mDiff; // for later weight calculation
-					delete study.df; // cleanup
+					delete study.mDiff; // cleanup
+					delete study.df;
+					delete study.sd;
 					delete study.variance;
 					delete study.t_crit;
 					delete study.moe;
 					break;
-				case "meanPairedDiffs":
+				case "meanPairedDiffsT":
 					study.m1 = dataIn[i][0]; // mean 1
 					study.sd1 = dataIn[i][1]; // standard deviation 1
 					study.m2 = dataIn[i][2]; // mean 2
@@ -183,11 +186,37 @@
 					study.variance = Math.pow(study.se, 2); // variance
 					study.moe = study.t_crit * study.se; // margin of error
 					study.weight = 1 / study.variance; // study weight
-					study.p = jStat.ttest(study.t, study.n) // p value
+					study.p = jStat.ttest(study.t, study.n); // p value
 					study.ll = study.mDiff - study.moe; // lower limit CI
 					study.ul = study.mDiff + study.moe; // upper limit CI
 					study.mid = study.mDiff; // for later weight calculation
-					delete study.df; // cleanup
+					delete study.mDiff; // cleanup
+					delete study.df;
+					delete study.t_crit;
+					delete study.se;
+					delete study.variance;
+					delete study.moe;
+					break;
+				case "meanPairedDiffsP":
+					study.m1 = dataIn[i][0]; // mean 1
+					study.sd1 = dataIn[i][1]; // standard deviation 1
+					study.m2 = dataIn[i][2]; // mean 2
+					study.sd2 = dataIn[i][3]; // standard deviation 2
+					study.n = dataIn[i][4]; // sample size
+					study.p = dataIn[i][5]; // known p value
+					study.mDiff = study.m2 - study.m1; // mean difference
+					study.df = study.n - 1; // degrees of freedom
+					study.t = jStat.studentt.inv(1 - (study.p / 2), study.df); // turn p back into t
+					study.t_crit = jStat.studentt.inv((1 - (alpha / 2)), study.df); //  critical t value
+					study.se = Math.abs(study.mDiff - nullMean) * (1 / study.t); // standard error calculated from paired t value
+					study.variance = Math.pow(study.se, 2); // variance
+					study.moe = study.t_crit * study.se; // margin of error
+					study.weight = 1 / study.variance; // study weight
+					study.ll = study.mDiff - study.moe; // lower limit CI
+					study.ul = study.mDiff + study.moe; // upper limit CI
+					study.mid = study.mDiff; // for later weight calculation
+					delete study.mDiff; // cleanup
+					delete study.df;
 					delete study.t_crit;
 					delete study.se;
 					delete study.variance;
@@ -351,6 +380,58 @@
 					delete study.varZ;
 					delete study.zDiff;
 					break;
+				case "prop":
+					// BOOKMARK
+					// let's try Agresti-Coull method...
+					// seems to work for CIs but ... hypothesis testing???
+					study.x = dataIn[i][0]; // subset of sample
+					study.n = dataIn[i][1]; // sample size
+					study.prop = study.x / study.n; // proportion
+					study.zCrit = jStat.normal.inv((1 - (alpha / 2)), 0, 1); // critical z value
+					study.zCritSq = Math.pow(study.zCrit, 2);
+					study.nMod = study.n + study.zCritSq;
+					study.pMod = (1 / study.nMod) * (study.x + (0.5 * study.zCritSq));
+					study.variance = (1 / study.n) * study.prop * (1 - study.prop);
+					study.varMod = (1 / study.nMod) * study.pMod * (1 - study.pMod);
+					study.ll = study.pMod - (study.zCrit * Math.sqrt(study.varMod));
+					study.ul = study.pMod + (study.zCrit * Math.sqrt(study.varMod));
+					study.weight = 1 / study.variance;
+					study.z = jStat.zscore(study.pMod, nullMean, Math.sqrt(study.varMod));
+					study.p = jStat.ztest(study.z);
+					study.mid = study.prop;
+					/*
+					// CURRENTLY using normal approximation -- but at small Ns it falls over and the CIs go beyond 0 and 1...
+					// was getting CI for the proportion
+					// but meta-analysis was using (Fisher's) Z values
+					// need to figure out how to convert back from Z to proportion?
+					// also, need to check "nullMean" on any meta-analysis that transforms data -- does nullMean need transformation??
+					// or at least an explanation about what the null represents?
+					study.x = dataIn[i][0]; // subset of sample
+					study.n = dataIn[i][1]; // sample size
+					study.prop = study.x / study.n; // proportion
+					study.q = 1 - study.prop; // Q = 1 - proportion
+					study.z_crit = jStat.normal.inv((1 - (alpha / 2)), 0, 1); // critical z value
+					//study.a = (2 * study.x) + Math.pow(study.z_crit, 2); // A
+					//study.b = study.z_crit * Math.sqrt(Math.pow(study.z_crit, 2) + (4 * study.x * study.q)); // B
+					//study.c = 2 * (study.n + Math.pow(study.z_crit, 2)); // C
+					//study.ll = (study.a - study.b) / study.c; // LL for prop
+					//study.ul = (study.a + study.b) / study.c; // UL for prop
+					//study.propZ = 0.5 * Math.log((1 + study.prop) / (1 - study.prop)); // Fisher's z for proportion
+					//study.varZ = 1 / (study.n - 3); // variance of z
+					//study.weight = 1 / study.varZ; // weight
+					//study.z = jStat.zscore(study.propZ, nullMean, Math.sqrt(study.varZ)); // z score
+					//study.p = jStat.ztest(study.z); // p value
+					//study.mid = study.propZ; // for later weight calculation
+					*/
+					/* This part is using normal approximation - terrible at extreme values, but also very easy...
+					study.variance = (study.prop * study.q) / study.n;
+					study.ll = study.prop - (study.z_crit * Math.sqrt(study.variance));
+					study.ul = study.prop + (study.z_crit * Math.sqrt(study.variance));
+					study.weight = 1 / study.variance;
+					study.z = jStat.zscore(study.prop, nullMean, Math.sqrt(study.variance));
+					study.p = jStat.ztest(study.z);
+					study.mid = study.prop;
+					*/
 				default:
 					break;
 			}
