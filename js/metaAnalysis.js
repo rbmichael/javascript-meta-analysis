@@ -15,6 +15,7 @@
 				"dUnbDiffs" - As above but calculates an Unbiased d,
 				"r" - Pearson's r correlations. Requires r, N,
 				"rDiffs" - For difference between two independent group correlations. Requires r1, N1, r2, N2.
+				"prop" - For proportions. Requires x (e.g., # of successes), N (e.g., total trials).
 			NUMBER: ci; Confidence interval (default 95),
 			NUMBER: nullMean; Null hypothesis value (default 0)
 		},
@@ -399,6 +400,11 @@
 					study.z = jStat.zscore(study.pMod, nullMean, Math.sqrt(study.varMod));
 					study.p = jStat.ztest(study.z);
 					study.mid = study.prop;
+					delete study.zCrit; // cleanup
+					delete study.zCritSq;
+					delete study.nMod;
+					delete study.pMod;
+					delete study.varMod;
 					/*
 					// CURRENTLY using normal approximation -- but at small Ns it falls over and the CIs go beyond 0 and 1...
 					// was getting CI for the proportion

@@ -78,7 +78,7 @@ $(function() {
 		description: "Single proportions",
 		dataFields: ["x", "N"],
 		dataRules:[1, 2],
- 		instructions: "Meta-analysis of single proportions. Requires the following from each study entered: Relevant subset of sample (x), Sample size (N)."
+ 		instructions: "Meta-analysis of single proportions. Requires the following from each study entered: Number (x), Sample size (N); The proportion will be calculated as x/N."
 	});
 
 	// populate the <select> element for choosing a type of meta-analysis from maTypesArray
