@@ -9,6 +9,8 @@
 				"meanDiffs" - For difference between two independent group means. Requires M1, SD1, N1, M2, SD2, N2,
 				"meanPairedDiffsT" - For difference between two dependent means with known paired t value. Requires M1, SD1, M2, SD2, N, paired t value,
 				"meanPairedDiffsP" - For difference between two dependent means with known p value. Requires M1, SD1, M2, SD2, N, p value,
+				"meanPairedDiffsSD" - For difference between two dependent means with known standard deviation of differences. Requires Mdiff, SDdiff, N,
+				"meanPairedDiffsSE" - For difference between two dependent means with known standard error of differences. Requires Mdiff, SEdiff, N,
 				"d" - Cohen's d for a single group. Requires d, N,
 				"dUnb" - As above but calculates an Unbiased d,
 				"dDiffs" - Cohen's d for the difference between two independent groups. Requires d, N1, N2,
@@ -16,6 +18,7 @@
 				"r" - Pearson's r correlations. Requires r, N,
 				"rDiffs" - For difference between two independent group correlations. Requires r1, N1, r2, N2.
 				"prop" - For proportions. Requires x (e.g., # of successes), N (e.g., total trials).
+				"propDiffs" - For difference between two independent proportions. Requires x1 (e.g., # of successes group 1), N1 (e.g., total trials group 1), x2, N2.
 			NUMBER: ci; Confidence interval (default 95),
 			NUMBER: nullMean; Null hypothesis value (default 0)
 		},
@@ -164,11 +167,9 @@
 					break;
 				case "meanPairedDiffsT":
 					study.m1 = dataIn[i][0]; // mean 1
-					study.sd1 = dataIn[i][1]; // standard deviation 1
-					study.m2 = dataIn[i][2]; // mean 2
-					study.sd2 = dataIn[i][3]; // standard deviation 2
-					study.n = dataIn[i][4]; // sample size
-					study.t = dataIn[i][5]; // paired t value
+					study.m2 = dataIn[i][1]; // mean 2
+					study.n = dataIn[i][2]; // sample size
+					study.t = dataIn[i][3]; // paired t value
 					study.mDiff = study.m2 - study.m1; // mean difference
 					study.se = Math.abs(study.mDiff - nullMean) * (1 / study.t); // standard error calculated from known paired t value
 					study.variance = Math.pow(study.se, 2); // variance
@@ -182,11 +183,9 @@
 					break;
 				case "meanPairedDiffsP":
 					study.m1 = dataIn[i][0]; // mean 1
-					study.sd1 = dataIn[i][1]; // standard deviation 1
-					study.m2 = dataIn[i][2]; // mean 2
-					study.sd2 = dataIn[i][3]; // standard deviation 2
-					study.n = dataIn[i][4]; // sample size
-					study.p = dataIn[i][5]; // known p value
+					study.m2 = dataIn[i][1]; // mean 2
+					study.n = dataIn[i][2]; // sample size
+					study.p = dataIn[i][3]; // known p value
 					study.mDiff = study.m2 - study.m1; // mean difference
 					study.t = jStat.studentt.inv(1 - (study.p / 2), study.n - 1); // turn p back into t
 					study.se = Math.abs(study.mDiff - nullMean) * (1 / study.t); // standard error calculated from paired t value
@@ -196,6 +195,34 @@
 					study.mid = study.mDiff; // for later weight calculation
 					delete study.mDiff; // cleanup
 					delete study.se;
+					delete study.variance;
+					break;
+				case "meanPairedDiffsSD":
+					study.mDiff = dataIn[i][0]; // mean diff
+					study.sd = dataIn[i][1]; // known SD of difference
+					study.n = dataIn[i][2]; // sample size
+					study.se = study.sd / Math.sqrt(study.n); // standard error
+					study.variance = Math.pow(study.se, 2); // variance
+					study.weight = 1 / study.variance; // study weight
+					[study.ll, study.ul] = jStat.tci(study.mDiff, alpha, Math.sqrt(study.variance * study.n), study.n);
+					study.t = jStat.tscore(study.mDiff, nullMean, Math.sqrt(study.variance * study.n), study.n);
+					study.p = jStat.ttest(study.t, study.n);
+					study.mid = study.mDiff; // for later weight calculation
+					delete study.mDiff; // cleanup
+					delete study.se;
+					delete study.variance;
+					break;
+				case "meanPairedDiffsSE":
+					study.mDiff = dataIn[i][0]; // mean diff
+					study.se = dataIn[i][1]; // known SE of difference
+					study.n = dataIn[i][2]; // sample size
+					study.variance = Math.pow(study.se, 2); // variance
+					study.weight = 1 / study.variance; // study weight
+					[study.ll, study.ul] = jStat.tci(study.mDiff, alpha, Math.sqrt(study.variance * study.n), study.n);
+					study.t = jStat.tscore(study.mDiff, nullMean, Math.sqrt(study.variance * study.n), study.n);
+					study.p = jStat.ttest(study.t, study.n);
+					study.mid = study.mDiff; // for later weight calculation
+					delete study.mDiff; // cleanup
 					delete study.variance;
 					break;
 				case "d":
@@ -345,7 +372,7 @@
 					study.r2z = 0.5 * Math.log((1 + study.r2) / (1 - study.r2)); // Fisher's z for r 2
 					study.varZ = (1 / (study.n1 - 3)) + (1 / (study.n2 - 3)) ; // variance
 					study.weight = 1 / study.varZ; // weight
-					study.zDiff = (study.r1z - study.r2z) / Math.sqrt(study.varZ); // z difference btwn Fisher's Zs
+					study.zDiff = (study.r2z - study.r1z) / Math.sqrt(study.varZ); // z difference btwn Fisher's Zs
 					[study.ll, study.ul] = jStat.normalci(study.zDiff, alpha, Math.sqrt(study.varZ), 1); // Z limits
 					study.z = jStat.zscore(study.zDiff, nullMean, Math.sqrt(study.varZ)) // z score
 					study.p = jStat.ztest(study.z); // p value
@@ -357,6 +384,7 @@
 					break;
 				case "prop":
 					// let's try Agresti-Coull method...
+					// the meta-analysis means/limits won't be right...
 					study.x = dataIn[i][0]; // subset of sample
 					study.n = dataIn[i][1]; // sample size
 					study.prop = study.x / study.n; // proportion
@@ -379,6 +407,48 @@
 					delete study.nMod;
 					delete study.pMod;
 					delete study.varMod;
+				case "propDiffs":
+					// let's try Agresti-Coull method...
+					// the meta-analysis means/limits won't be right...
+					study.x1 = dataIn[i][0]; // subset of sample 1
+					study.n1 = dataIn[i][1]; // sample size 1
+					study.x2 = dataIn[i][2]; // subset of sample 2
+					study.n2 = dataIn[i][3];
+					study.prop1 = study.x1 / study.n1; // proportion 1
+					study.prop2 = study.x2 / study.n2; // proportion 2
+					study.zCrit = jStat.normal.inv((1 - (alpha / 2)), 0, 1); // critical z value
+					study.zCritSq = Math.pow(study.zCrit, 2); // crit z squared
+					study.nMod1 = study.n1 + study.zCritSq; // modify sample size 1
+					study.nMod2 = study.n2 + study.zCritSq; // modify sample size 2
+					study.pMod1 = (1 / study.nMod1) * (study.x1 + (0.5 * study.zCritSq)); // modify proportion 1
+					study.pMod2 = (1 / study.nMod2) * (study.x2 + (0.5 * study.zCritSq)); // modify proportion 2
+					study.varMod1 = (1 / study.nMod1) * study.pMod1 * (1 - study.pMod1); // modify variance 1
+					study.varMod2 = (1 / study.nMod2) * study.pMod2 * (1 - study.pMod2); // modify variance 2
+					[study.ll1, study.ul1] = jStat.normalci(study.pMod1, alpha, Math.sqrt(study.varMod1), 1); // confidence interval 1
+					[study.ll2, study.ul2] = jStat.normalci(study.pMod2, alpha, Math.sqrt(study.varMod2), 1); // confidence interval 2
+					study.ll1 = Math.max(0, study.ll1); // correcting for extreme values
+					study.ul1 = Math.min(1, study.ul1); // correcting for extreme values
+					study.ll2 = Math.max(0, study.ll2); // correcting for extreme values
+					study.ul2 = Math.min(1, study.ul2); // correcting for extreme values
+					study.mDiff = study.prop2 - study.prop1; // difference
+					study.ll = (study.mDiff - nullMean) - Math.sqrt(Math.pow(study.prop2 - study.ll2, 2) + Math.pow(study.ul1 - study.prop1, 2)); // diff CI
+					study.ul = (study.mDiff - nullMean) + Math.sqrt(Math.pow(study.prop1 - study.ll1, 2) + Math.pow(study.ul2 - study.prop2, 2)); // diff CI
+					study.weight = 1 / (study.varMod1 + study.varMod2); // weight
+					study.z = jStat.zscore(study.mDiff, nullMean, Math.sqrt(study.varMod1 + study.varMod2)); // z
+					study.p = jStat.ztest(study.z); // p
+					study.mid = study.mDiff; // for later weight calculation
+					delete study.zCrit; // cleanup
+					delete study.zCritSq;
+					delete study.nMod1;
+					delete study.pMod1;
+					delete study.varMod1;
+					delete study.nMod2;
+					delete study.pMod2;
+					delete study.varMod2;
+					delete study.ll1;
+					delete study.ul1;
+					delete study.ll2;
+					delete study.ul2;
 				default:
 					break;
 			}
@@ -495,7 +565,10 @@
 			maData.ul = (Math.exp(2 * maData.ul) - 1) / (Math.exp(2 * maData.ul) + 1); // UL
 		} else if (maType === "prop") { // min/max for proportions
 			maData.ll = Math.max(0, maData.ll);
-			maData.ul = Math.max(0, maData.ul);
+			maData.ul = Math.min(1, maData.ul);
+		} else if (maType === "propDiffs") { // min/max for diffs btwn proportions
+			maData.ll = Math.max(-1, maData.ll);
+			maData.ul = Math.min(1, maData.ul);
 		}
 
 		return maData;

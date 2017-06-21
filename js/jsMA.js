@@ -34,16 +34,30 @@ $(function() {
 	maTypesArray.push({
 		name: "meanPairedDiffsT",
 		description: "Diff btwn 2 dependent means (t known)",
-		dataFields: ["M1", "SD1", "M2", "SD2", "N", "t"],
-		dataRules: [0, 1, 0, 1, 2, 0],
- 		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean 1 (M1), Standard deviation 1 (SD1), Mean 2 (M2), Standard deviation 2 (SD2), Sample size (N), Paired t-test value (t)."
+		dataFields: ["M1", "M2", "N", "t"],
+		dataRules: [0, 0, 2, 0],
+ 		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean 1 (M1), Mean 2 (M2), Sample size (N), Paired t-test value (t)."
 	});
 	maTypesArray.push({
 		name: "meanPairedDiffsP",
 		description: "Diff btwn 2 dependent means (p known)",
-		dataFields: ["M1", "SD1", "M2", "SD2", "N", "p"],
-		dataRules: [0, 1, 0, 1, 2, 3],
- 		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean 1 (M1), Standard deviation 1 (SD1), Mean 2 (M2), Standard deviation 2 (SD2), Sample size (N), p value (p)."
+		dataFields: ["M1", "M2", "N", "p"],
+		dataRules: [0, 0, 2, 3],
+ 		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean 1 (M1), Mean 2 (M2), Sample size (N), p value (p)."
+	});
+	maTypesArray.push({
+		name: "meanPairedDiffsSD",
+		description: "Diff btwn 2 dependent means (SD of diffs known)",
+		dataFields: ["Mdiff", "SDdiff", "N"],
+		dataRules: [0, 0, 2],
+ 		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean difference (Mdiff), Standard deviation of the mean difference (SDdiff), Sample size (N)."
+	});
+	maTypesArray.push({
+		name: "meanPairedDiffsSE",
+		description: "Diff btwn 2 dependent means (SE of diffs known)",
+		dataFields: ["Mdiff", "SEdiff", "N"],
+		dataRules: [0, 0, 2],
+ 		instructions: "Meta-analysis of the difference between two dependent means. Requires the following from each study entered: Mean difference (Mdiff), Standard error of the mean difference (SEdiff), Sample size (N)."
 	});
 	maTypesArray.push({
 		name:"d",
@@ -79,6 +93,13 @@ $(function() {
 		dataFields: ["x", "N"],
 		dataRules:[0, 2],
  		instructions: "Meta-analysis of single proportions. Requires the following from each study entered: Number (x), Sample size (N); The proportion will be calculated as x/N."
+	});
+	maTypesArray.push({
+		name:"propDiffs",
+		description: "Diff btwn 2 ind proportions",
+		dataFields: ["x1", "N1", "x2", "N2"],
+		dataRules:[0, 2, 0, 2],
+ 		instructions: "Meta-analysis of difference between two independent proportions. Requires the following from each study entered: Number (x1), Sample size (N1), Number (x2), Sample size (N2); Proportions are calculated as x/N."
 	});
 
 	// populate the <select> element for choosing a type of meta-analysis from maTypesArray
