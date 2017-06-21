@@ -77,7 +77,7 @@ $(function() {
 		name:"prop",
 		description: "Single proportions",
 		dataFields: ["x", "N"],
-		dataRules:[1, 2],
+		dataRules:[0, 2],
  		instructions: "Meta-analysis of single proportions. Requires the following from each study entered: Number (x), Sample size (N); The proportion will be calculated as x/N."
 	});
 
@@ -412,14 +412,9 @@ $(function() {
 
 	});
 
-	// hide the dUnbiased checkbox
-	$('#dUnbiased').hide();
-
-	// reset and add the initial 2 study rows
-	$('#removeAll').click();
-
-	// enable the 'run' button
-	$('#run').prop('disabled', false);
+	$('#dUnbiased').hide(); // hide the dUnbiased checkbox
+	$('#removeAll').click(); // reset and add the initial 2 study rows
+	$('#run').prop('disabled', false); // enable the 'run' button
 
 	// data entry check function
 	function checkFormData(rules) {
